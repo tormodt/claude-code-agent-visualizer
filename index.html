@@ -429,12 +429,6 @@ function drawDesk(slotIdx, agentsHere) {
   rr(cx-12, cy+3, 24, 8, 1); ctx.fill();
   ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=0.5; rr(cx-12, cy+3, 24, 8, 1); ctx.stroke();
 
-  // Name tag
-  if (agent) {
-    ctx.fillStyle='rgba(160,140,220,0.7)';
-    ctx.font='7px "Segoe UI"'; ctx.textAlign='center';
-    ctx.fillText(agent.name.slice(0,12), cx, cy+DH/2+32);
-  }
 }
 
 // ─── GROUP TABLE ──────────────────────────────────────────────────────────────
@@ -527,10 +521,6 @@ function drawGroupTable(slotIdx, agentsHere) {
   ctx.fillStyle='rgba(40,120,180,0.5)';
   rr(cx-7, cy-8, 14, 17, 2); ctx.fill();
 
-  // Label
-  ctx.fillStyle='rgba(160,140,200,0.6)';
-  ctx.font='8px "Segoe UI"'; ctx.textAlign='center';
-  ctx.fillText('COLLAB', cx, cy+TH/2+30);
 }
 
 // ─── WORKER ───────────────────────────────────────────────────────────────────
