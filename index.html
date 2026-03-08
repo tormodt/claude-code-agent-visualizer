@@ -8,14 +8,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #0e0b06; display: flex; flex-direction: column; align-items: center; padding: 12px; font-family: 'Segoe UI', system-ui, sans-serif; }
   canvas { display: block; border: 2px solid #5a3810; border-radius: 3px; box-shadow: 0 8px 48px rgba(0,0,0,0.9); }
-  #prompt-bar { width: 900px; display: flex; gap: 8px; margin-top: 8px; align-items: stretch; }
-  #prompt-project { background: #1a1208; color: #c8a060; border: 1px solid #4a2e10; border-radius: 3px; padding: 8px 10px; font-size: 12px; font-family: 'Courier New', monospace; cursor: pointer; outline: none; min-width: 130px; }
-  #prompt-input { flex: 1; background: #1a1208; color: #f0e0b0; border: 1px solid #4a2e10; border-radius: 3px; padding: 8px 12px; font-size: 13px; outline: none; }
-  #prompt-input:focus { border-color: #8a6030; box-shadow: 0 0 0 2px rgba(138,96,48,0.15); }
-  #prompt-input::placeholder { color: #3a2810; }
-  #prompt-send { background: #6a3010; color: #f0d080; border: 1px solid #9a5828; border-radius: 3px; padding: 8px 20px; font-size: 12px; font-weight: bold; cursor: pointer; font-family: 'Courier New', monospace; letter-spacing: 1px; white-space: nowrap; }
-  #prompt-send:hover { background: #8a4018; }
-  #prompt-send:disabled { opacity: 0.5; cursor: default; }
+  #prompt-bar { display: none; }
   #api-bar { width: 900px; display: flex; gap: 8px; margin-top: 6px; align-items: center; }
   #api-bar label { font-size: 10px; color: #5a3a18; font-family: 'Courier New', monospace; white-space: nowrap; letter-spacing: 1px; }
   #api-key { flex: 1; background: #1a1208; color: #c8a060; border: 1px solid #3a2010; border-radius: 3px; padding: 5px 10px; font-size: 12px; font-family: 'Courier New', monospace; outline: none; }
@@ -34,7 +27,6 @@
   <button id="api-save">SAVE</button>
 </div>
 <div id="prompt-bar">
-  <select id="prompt-project"><option value="">-- project --</option></select>
   <input id="prompt-input" type="text" placeholder="Give Claude a task..." autocomplete="off" spellcheck="false">
   <button id="prompt-send">DEPLOY</button>
 </div>
@@ -45,7 +37,6 @@ const canvas = document.getElementById('canvas');
 const ctx    = canvas.getContext('2d');
 const statusEl = document.getElementById('status');
 const promptInput   = document.getElementById('prompt-input');
-const promptProject = document.getElementById('prompt-project');
 const promptSend    = document.getElementById('prompt-send');
 const apiKeyInput   = document.getElementById('api-key');
 const apiSaveBtn    = document.getElementById('api-save');
@@ -637,16 +628,6 @@ function connect() {
 }
 
 
-// Load project list from server config
-fetch('/config').then(r => r.json()).then(data => {
-  const map = data.projectMap || {};
-  promptProject.innerHTML = '<option value="">-- project --</option>';
-  for (const label of Object.keys(map)) {
-    const o = document.createElement('option');
-    o.value = map[label]; o.textContent = label;
-    promptProject.appendChild(o);
-  }
-}).catch(() => {});
 
 connect();
 
@@ -654,7 +635,7 @@ connect();
 async function sendPrompt() {
   const prompt = promptInput.value.trim();
   if (!prompt) return;
-  const projectDir = promptProject.value || '';
+  const projectDir = '';
   promptSend.disabled = true; promptSend.textContent = '...';
   try {
     const r = await fetch('/prompt', {
