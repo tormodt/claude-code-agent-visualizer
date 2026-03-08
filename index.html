@@ -9,7 +9,7 @@
   body { background: #0e0b06; display: flex; flex-direction: column; align-items: center; padding: 12px; font-family: 'Segoe UI', system-ui, sans-serif; }
   canvas { display: block; border: 2px solid #5a3810; border-radius: 3px; box-shadow: 0 8px 48px rgba(0,0,0,0.9); }
   #prompt-bar { display: none; }
-  #api-bar { width: 900px; display: flex; gap: 8px; margin-top: 6px; align-items: center; }
+  #api-bar { width: 100%; display: flex; gap: 8px; margin-top: 6px; align-items: center; }
   #api-bar label { font-size: 10px; color: #5a3a18; font-family: 'Courier New', monospace; white-space: nowrap; letter-spacing: 1px; }
   #api-key { flex: 1; background: #1a1208; color: #c8a060; border: 1px solid #3a2010; border-radius: 3px; padding: 5px 10px; font-size: 12px; font-family: 'Courier New', monospace; outline: none; }
   #api-key:focus { border-color: #6a4020; }
@@ -61,8 +61,21 @@ statusEl.addEventListener('click', () => setKeyHidden(false));
 const W = 900, H = 560;
 const DPR = window.devicePixelRatio || 1;
 canvas.width = W*DPR; canvas.height = H*DPR;
-canvas.style.width = W+'px'; canvas.style.height = H+'px';
 ctx.scale(DPR, DPR);
+
+function resizeCanvas() {
+  const pad = 24;
+  const minW = Math.round(1920 * 0.40);
+  const maxW = Math.round(1920 * 0.80);
+  const dw = Math.max(minW, Math.min(maxW, window.innerWidth - pad));
+  const dh = Math.round(dw * H / W);
+  canvas.style.width  = dw + 'px';
+  canvas.style.height = dh + 'px';
+  const bar = document.getElementById('api-bar');
+  if (bar) bar.style.maxWidth = dw + 'px';
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const DIRT      = '#c4944a';
