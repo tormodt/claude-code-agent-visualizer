@@ -59,25 +59,25 @@ canvas.style.width = W+'px'; canvas.style.height = H+'px';
 ctx.scale(DPR, DPR);
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
-const CARPET     = '#e2daf0';
-const TILE       = '#f0ece4';
-const PARTITION  = '#b8b0d0';
-const DESK_TOP   = '#d8c8a0';
-const DESK_FACE  = '#b8a878';
-const DESK_LEG   = '#887860';
-const CHAIR_C    = '#7868a0';
-const CHAIR_SEAT = '#9888b8';
-const COUCH_BACK = '#4a3878';
-const COUCH_SEAT = '#6858a8';
-const COUCH_ARM  = '#382860';
-const TV_FRAME   = '#14121e';
-const TV_SCR     = '#080a12';
-const TBL_TOP    = '#c8b888';
-const TBL_FACE   = '#a89468';
-const POT_C      = '#b85828';
-const LEAF_G     = '#488838';
-const LEAF_DK    = '#2a5820';
-const OUTLINE    = '#14121e';
+const CARPET     = '#1a1630';
+const TILE       = '#16161e';
+const PARTITION  = '#38346a';
+const DESK_TOP   = '#28221a';
+const DESK_FACE  = '#1c1810';
+const DESK_LEG   = '#141210';
+const CHAIR_C    = '#32286a';
+const CHAIR_SEAT = '#443880';
+const COUCH_BACK = '#3a2c68';
+const COUCH_SEAT = '#5448a0';
+const COUCH_ARM  = '#2e2258';
+const TV_FRAME   = '#0e0c18';
+const TV_SCR     = '#050710';
+const TBL_TOP    = '#241e14';
+const TBL_FACE   = '#18140c';
+const POT_C      = '#8c3e18';
+const LEAF_G     = '#3a6e2a';
+const LEAF_DK    = '#224018';
+const OUTLINE    = '#2e2c50';
 const SKIN       = '#f0c888';
 
 const ACTION_COLORS = {
@@ -219,55 +219,56 @@ function drawBackground() {
   // Lounge carpet
   ctx.fillStyle = CARPET;
   ctx.fillRect(0, 0, LOUNGE_W, H);
-  ctx.strokeStyle = 'rgba(90,70,150,0.06)'; ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(150,120,220,0.08)'; ctx.lineWidth = 1;
   for (let x=0; x<LOUNGE_W; x+=10) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
   for (let y=0; y<H; y+=10) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(LOUNGE_W,y); ctx.stroke(); }
 
   // Office tile floor
   ctx.fillStyle = TILE;
   ctx.fillRect(LOUNGE_W, 0, W-LOUNGE_W, H);
-  ctx.strokeStyle = 'rgba(0,0,0,0.04)'; ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1;
   for (let x=LOUNGE_W; x<W; x+=50) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
   for (let y=0; y<H; y+=50) { ctx.beginPath(); ctx.moveTo(LOUNGE_W,y); ctx.lineTo(W,y); ctx.stroke(); }
 
   // Ceiling light halos
-  ctx.fillStyle = 'rgba(255,255,240,0.12)';
+  ctx.fillStyle = 'rgba(255,255,220,0.2)';
   for (let lx=LOUNGE_W+75; lx<W; lx+=150)
     for (let ly=55; ly<H; ly+=150) {
       ctx.beginPath(); ctx.ellipse(lx, ly, 38, 28, 0, 0, Math.PI*2); ctx.fill();
     }
 
   // Glass partition
-  ctx.fillStyle = 'rgba(160,140,210,0.18)';
+  ctx.fillStyle = 'rgba(100,80,200,0.22)';
   ctx.fillRect(LOUNGE_W, 0, 8, H);
-  ctx.fillStyle = 'rgba(200,185,235,0.5)';
+  ctx.fillStyle = 'rgba(160,140,255,0.35)';
   ctx.fillRect(LOUNGE_W+2, 0, 2, H);
   ctx.fillStyle = PARTITION;
   ctx.fillRect(LOUNGE_W-2, 0, 3, H);
   ctx.fillRect(LOUNGE_W+8, 0, 3, H);
 
-  // TV on lounge wall
-  const TVX=5, TVY=52, TVW=38, TVH=166;
-  ctx.fillStyle='rgba(0,0,0,0.15)';
+  // TV on lounge wall — wide, same width as sofa
+  const TVX=42, TVY=34, TVW=148, TVH=30;
+  ctx.fillStyle='rgba(0,0,0,0.25)';
   ctx.fillRect(TVX+3, TVY+3, TVW+4, TVH+4);
   ctx.fillStyle = TV_FRAME;
   rr(TVX, TVY, TVW+4, TVH+4, 3); ctx.fill();
   ctx.fillStyle = TV_SCR;
   ctx.fillRect(TVX+4, TVY+4, TVW, TVH);
-  // Screen glow + content lines
-  ctx.fillStyle = 'rgba(40,80,210,0.1)';
+  // Screen glow
+  ctx.fillStyle = 'rgba(40,80,210,0.15)';
   ctx.fillRect(TVX+4, TVY+4, TVW, TVH);
-  ctx.strokeStyle = 'rgba(80,120,255,0.18)'; ctx.lineWidth=1;
-  for (let ly=TVY+14; ly<TVY+TVH; ly+=16) {
-    ctx.beginPath(); ctx.moveTo(TVX+7, ly); ctx.lineTo(TVX+TVW-4, ly); ctx.stroke();
+  // Horizontal scanlines
+  ctx.strokeStyle = 'rgba(80,120,255,0.2)'; ctx.lineWidth=1;
+  for (let ly=TVY+10; ly<TVY+TVH; ly+=8) {
+    ctx.beginPath(); ctx.moveTo(TVX+6, ly); ctx.lineTo(TVX+TVW-2, ly); ctx.stroke();
   }
-  ctx.fillStyle = 'rgba(100,140,255,0.55)';
+  ctx.fillStyle = 'rgba(120,160,255,0.7)';
   ctx.font = 'bold 9px "Courier New"'; ctx.textAlign='center';
-  ctx.fillText('CC', TVX+TVW/2+2, TVY+26);
+  ctx.fillText('CLAUDE CODE', TVX+TVW/2+2, TVY+21);
   // TV stand
-  ctx.fillStyle = '#2a2840';
-  ctx.fillRect(TVX+TVW/2-4, TVY+TVH+4, 7, 10);
-  ctx.fillRect(TVX+TVW/2-14, TVY+TVH+13, 28, 4);
+  ctx.fillStyle = '#1a1828';
+  ctx.fillRect(TVX+TVW/2-4, TVY+TVH+4, 8, 8);
+  ctx.fillRect(TVX+TVW/2-16, TVY+TVH+11, 32, 4);
 
   // Plants
   drawPlant(LOUNGE_W+18, 52);
@@ -276,7 +277,7 @@ function drawBackground() {
   drawPlant(8, H-38);
 
   // Section label
-  ctx.fillStyle = 'rgba(80,60,140,0.38)';
+  ctx.fillStyle = 'rgba(140,120,200,0.5)';
   ctx.font = '9px "Segoe UI"'; ctx.textAlign='center';
   ctx.fillText('LOUNGE', LOUNGE_W/2, H-14);
   ctx.fillText('OFFICE', (LOUNGE_W+W)/2, H-14);
@@ -324,15 +325,15 @@ function drawCouch() {
   const TX=CX, TY=CY+48;
   ctx.fillStyle='rgba(0,0,0,0.1)';
   ctx.beginPath(); ctx.ellipse(TX, TY+10, 50, 8, 0, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle='#c0ae88';
+  ctx.fillStyle='#1e1a12';
   rr(TX-46, TY-2, 92, 24, 5); ctx.fill();
   ctx.strokeStyle=OUTLINE; ctx.lineWidth=1.2; rr(TX-46, TY-2, 92, 24, 5); ctx.stroke();
   // Items on table
-  ctx.fillStyle='#e8e0d8'; rr(TX-20,TY+3,12,9,2); ctx.fill(); // mug
+  ctx.fillStyle='#2a2830'; rr(TX-20,TY+3,12,9,2); ctx.fill(); // mug
   ctx.strokeStyle=OUTLINE; ctx.lineWidth=0.7; rr(TX-20,TY+3,12,9,2); ctx.stroke();
-  ctx.fillStyle='#5a3010'; ctx.fillRect(TX-19,TY+4,10,5);
-  ctx.fillStyle='#2a2840'; rr(TX+4,TY+2,22,14,2); ctx.fill(); // laptop
-  ctx.fillStyle='rgba(40,80,200,0.28)'; rr(TX+5,TY+3,20,12,1); ctx.fill();
+  ctx.fillStyle='rgba(80,200,255,0.4)'; ctx.fillRect(TX-19,TY+4,10,5);
+  ctx.fillStyle='#1a1828'; rr(TX+4,TY+2,22,14,2); ctx.fill(); // laptop
+  ctx.fillStyle='rgba(40,80,200,0.4)'; rr(TX+5,TY+3,20,12,1); ctx.fill();
 }
 
 // ─── DESK ─────────────────────────────────────────────────────────────────────
@@ -387,13 +388,13 @@ function drawDesk(slotIdx, agentsHere) {
   ctx.fillRect(cx-5, cy-DH/2+mh+5, 10, 2);
 
   // Keyboard
-  ctx.fillStyle='#ddd8ea';
+  ctx.fillStyle='#1e1c2e';
   rr(cx-12, cy+3, 24, 8, 1); ctx.fill();
-  ctx.strokeStyle='rgba(0,0,0,0.12)'; ctx.lineWidth=0.5; rr(cx-12, cy+3, 24, 8, 1); ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=0.5; rr(cx-12, cy+3, 24, 8, 1); ctx.stroke();
 
   // Name tag
   if (agent) {
-    ctx.fillStyle='rgba(20,18,40,0.65)';
+    ctx.fillStyle='rgba(160,140,220,0.7)';
     ctx.font='7px "Segoe UI"'; ctx.textAlign='center';
     ctx.fillText(agent.name.slice(0,12), cx, cy+DH/2+30);
   }
@@ -461,14 +462,14 @@ function drawGroupTable(slotIdx, agentsHere) {
   }
 
   // Water jug / plant in center
-  ctx.fillStyle='#d4eef8';
+  ctx.fillStyle='#1a2430';
   rr(cx-9, cy-10, 18, 22, 3); ctx.fill();
-  ctx.strokeStyle='rgba(0,0,0,0.12)'; ctx.lineWidth=0.8; rr(cx-9, cy-10, 18, 22, 3); ctx.stroke();
-  ctx.fillStyle='rgba(80,170,210,0.35)';
+  ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=0.8; rr(cx-9, cy-10, 18, 22, 3); ctx.stroke();
+  ctx.fillStyle='rgba(40,120,180,0.5)';
   rr(cx-7, cy-8, 14, 17, 2); ctx.fill();
 
   // Label
-  ctx.fillStyle='rgba(20,18,40,0.5)';
+  ctx.fillStyle='rgba(160,140,200,0.6)';
   ctx.font='8px "Segoe UI"'; ctx.textAlign='center';
   ctx.fillText('COLLAB', cx, cy+TH/2+26);
 }
@@ -500,6 +501,13 @@ function drawWorker(a) {
   // Collar
   ctx.strokeStyle='rgba(255,255,255,0.14)'; ctx.lineWidth=1.5;
   ctx.beginPath(); ctx.moveTo(x-2,y-8+bob); ctx.lineTo(x,y-4+bob); ctx.lineTo(x+2,y-8+bob); ctx.stroke();
+  // Pocket protector
+  ctx.fillStyle='rgba(255,255,255,0.18)';
+  ctx.fillRect(x-5,y-3+bob,5,5);
+  ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=0.5;
+  ctx.strokeRect(x-5,y-3+bob,5,5);
+  ctx.fillStyle='#e83878'; ctx.fillRect(x-4,y-5+bob,1,4); // pen 1
+  ctx.fillStyle='#2888e8'; ctx.fillRect(x-2,y-5+bob,1,4); // pen 2
 
   // Head
   ctx.fillStyle=SKIN;
@@ -510,6 +518,13 @@ function drawWorker(a) {
   ctx.fillStyle='#1a1828';
   ctx.fillRect(x-3,y-10+bob,2,2);
   ctx.fillRect(x+1,y-10+bob,2,2);
+  // Glasses
+  ctx.strokeStyle='#2a2440'; ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.arc(x-2,y-10+bob,2.5,0,Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(x+2,y-10+bob,2.5,0,Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x-4.5,y-10+bob); ctx.lineTo(x+4.5,y-10+bob); ctx.stroke(); // bridge
+  ctx.beginPath(); ctx.moveTo(x-4.5,y-10+bob); ctx.lineTo(x-7,y-9+bob); ctx.stroke(); // left arm
+  ctx.beginPath(); ctx.moveTo(x+4.5,y-10+bob); ctx.lineTo(x+7,y-9+bob); ctx.stroke(); // right arm
 
   // Action glow
   if (action !== 'idle' && phase === 'working') {
@@ -586,12 +601,12 @@ function drawBubble(a) {
   const tw=ctx.measureText(text).width, bw=tw+16, bh=22;
   const bx=Math.max(10,Math.min(W-bw-10,x-bw/2)), by=y-56;
   ctx.save(); ctx.globalAlpha=alpha;
-  gBox(bx,by,bw,bh,'#f4f0fc',5,1.5);
-  ctx.strokeStyle=hexRgba(color,0.5); ctx.lineWidth=1.5; rr(bx,by,bw,bh,5); ctx.stroke();
+  gBox(bx,by,bw,bh,'#1e1c34',5,1.5);
+  ctx.strokeStyle=hexRgba(color,0.6); ctx.lineWidth=1.5; rr(bx,by,bw,bh,5); ctx.stroke();
   const tx=Math.max(bx+8,Math.min(bx+bw-8,x));
-  ctx.fillStyle='#f4f0fc';
+  ctx.fillStyle='#1e1c34';
   ctx.beginPath(); ctx.moveTo(tx-4,by+bh); ctx.lineTo(tx+4,by+bh); ctx.lineTo(tx,by+bh+5); ctx.closePath(); ctx.fill();
-  ctx.fillStyle='#14121e'; ctx.textAlign='left';
+  ctx.fillStyle='#d8d0f0'; ctx.textAlign='left';
   ctx.beginPath(); rr(bx+1,by+1,bw-2,bh-2,4); ctx.clip(); ctx.fillText(text,bx+8,by+15);
   ctx.restore();
 }
