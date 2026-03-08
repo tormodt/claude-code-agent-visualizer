@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Age of Agents</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%230e0b06'/><text y='24' x='3' font-size='24'>⚔️</text></svg>">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0e0b06; display: flex; flex-direction: column; align-items: center; padding: 12px; font-family: 'Segoe UI', system-ui, sans-serif; }
+  canvas { display: block; border: 2px solid #5a3810; border-radius: 3px; box-shadow: 0 8px 48px rgba(0,0,0,0.9); }
+  #prompt-bar { width: 900px; display: flex; gap: 8px; margin-top: 8px; align-items: stretch; }
+  #prompt-project { background: #1a1208; color: #c8a060; border: 1px solid #4a2e10; border-radius: 3px; padding: 8px 10px; font-size: 12px; font-family: 'Courier New', monospace; cursor: pointer; outline: none; min-width: 130px; }
+  #prompt-input { flex: 1; background: #1a1208; color: #f0e0b0; border: 1px solid #4a2e10; border-radius: 3px; padding: 8px 12px; font-size: 13px; outline: none; }
+  #prompt-input:focus { border-color: #8a6030; box-shadow: 0 0 0 2px rgba(138,96,48,0.15); }
+  #prompt-input::placeholder { color: #3a2810; }
+  #prompt-send { background: #6a3010; color: #f0d080; border: 1px solid #9a5828; border-radius: 3px; padding: 8px 20px; font-size: 12px; font-weight: bold; cursor: pointer; font-family: 'Courier New', monospace; letter-spacing: 1px; white-space: nowrap; }
+  #prompt-send:hover { background: #8a4018; }
+  #prompt-send:disabled { opacity: 0.5; cursor: default; }
+  #api-bar { width: 900px; display: flex; gap: 8px; margin-top: 6px; align-items: center; }
+  #api-bar label { font-size: 10px; color: #5a3a18; font-family: 'Courier New', monospace; white-space: nowrap; letter-spacing: 1px; }
+  #api-key { flex: 1; background: #1a1208; color: #c8a060; border: 1px solid #3a2010; border-radius: 3px; padding: 5px 10px; font-size: 12px; font-family: 'Courier New', monospace; outline: none; }
+  #api-key:focus { border-color: #6a4020; }
+  #api-key::placeholder { color: #3a2010; }
+  #api-save { background: #2a1808; color: #8a6030; border: 1px solid #3a2010; border-radius: 3px; padding: 5px 12px; font-size: 11px; cursor: pointer; font-family: 'Courier New', monospace; }
+  #api-save:hover { background: #3a2010; color: #c8a060; }
+  #status { font-size: 10px; color: #3a2410; margin-top: 4px; font-family: 'Courier New', monospace; letter-spacing: 1px; align-self: flex-start; }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div id="api-bar">
+  <label>ANTHROPIC KEY</label>
+  <input id="api-key" type="password" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
+  <button id="api-save">SAVE</button>
+</div>
+<div id="prompt-bar">
+  <select id="prompt-project"><option value="">-- project --</option></select>
+  <input id="prompt-input" type="text" placeholder="Give Claude a task..." autocomplete="off" spellcheck="false">
+  <button id="prompt-send">DEPLOY</button>
+</div>
+<div id="status">connecting...</div>
+<script>
+// ─── CANVAS ───────────────────────────────────────────────────────────────────
+const canvas = document.getElementById('canvas');
+const ctx    = canvas.getContext('2d');
+const statusEl = document.getElementById('status');
+const promptInput   = document.getElementById('prompt-input');
+const promptProject = document.getElementById('prompt-project');
+const promptSend    = document.getElementById('prompt-send');
+const apiKeyInput   = document.getElementById('api-key');
+const apiSaveBtn    = document.getElementById('api-save');
+
+// Load saved API key
+const savedKey = localStorage.getItem('anthropic_api_key') || '';
+function setKeyHidden(hidden) {
+  document.getElementById('api-bar').style.display = hidden ? 'none' : 'flex';
+  if (!hidden) apiKeyInput.focus();
+}
+if (savedKey) { apiKeyInput.value = savedKey; setKeyHidden(true); }
+apiSaveBtn.addEventListener('click', () => {
+  const k = apiKeyInput.value.trim();
+  if (k) { localStorage.setItem('anthropic_api_key', k); statusEl.textContent = 'API key saved'; setKeyHidden(true); }
+  else   { localStorage.removeItem('anthropic_api_key'); statusEl.textContent = 'API key cleared'; }
+});
+apiKeyInput.addEventListener('keydown', e => { if (e.key === 'Enter') apiSaveBtn.click(); });
+// Click status bar to re-show key field
+statusEl.style.cursor = 'pointer';
+statusEl.title = 'Click to change API key';
+statusEl.addEventListener('click', () => setKeyHidden(false));
+const W = 900, H = 560;
+const DPR = window.devicePixelRatio || 1;
+canvas.width = W*DPR; canvas.height = H*DPR;
+canvas.style.width = W+'px'; canvas.style.height = H+'px';
+ctx.scale(DPR, DPR);
+
+// ─── PALETTE ──────────────────────────────────────────────────────────────────
+const DIRT      = '#c4944a';
+const DIRT_DK   = '#a07838';
+const GRASS     = '#5a8030';
+const GRASS_LT  = '#6a9840';
+const STONE     = '#9a9080';
+const STONE_DK  = '#6a6858';
+const STONE_LT  = '#c0bcb0';
+const WOOD      = '#8a5030';
+const WOOD_DK   = '#5a3018';
+const THATCH    = '#b07840';
+const THATCH_DK = '#7a5020';
+const WALL_C    = '#a09888';
+const ROOF_C    = '#8a4030';
+const OUTLINE   = '#1a1208';
+const SKIN      = '#e8c090';
+
+const ACTION_COLORS = {
+  thinking:'#9966ff', reading:'#ffaa22', typing:'#22dd88',
+  terminal:'#22ee44', browsing:'#3388ff', responding:'#cc66ff',
+  receiving:'#22eecc', spawning:'#ff7722', searching:'#ffee22',
+  tool:'#88ee22', idle:'#665544',
+};
+const ACTION_LABELS = {
+  thinking:'THINKING', reading:'READING', typing:'WRITING',
+  terminal:'TERMINAL', browsing:'BROWSING', responding:'SPEAKING',
+  receiving:'RECEIVING', spawning:'SPAWNING', searching:'LOADING',
+  tool:'TOOL', idle:'IDLE',
+};
+const AGENT_COLORS = ['#e83878','#28c87a','#2888e8','#e8b828','#9838e8','#e83828','#28c8d8','#e87828'];
+
+// ─── LAYOUT ───────────────────────────────────────────────────────────────────
+const TC      = { x: 100, y: 280 };
+const TC_GATE = { x: 176, y: 280 };
+const BLDG_W = 76, BLDG_H = 54;
+const BLDG_FACE_H = 20;
+
+// 12 building slots: 3 rows × 4 cols
+const BUILDING_SLOTS = [
+  { x: 280, y: 110 }, { x: 460, y:  95 }, { x: 640, y: 110 }, { x: 820, y:  95 },
+  { x: 280, y: 270 }, { x: 460, y: 255 }, { x: 640, y: 270 }, { x: 820, y: 255 },
+  { x: 280, y: 435 }, { x: 460, y: 450 }, { x: 640, y: 435 }, { x: 820, y: 450 },
+];
+
+function workPos(slotIdx) {
+  const s = BUILDING_SLOTS[slotIdx];
+  return { x: s.x + 4, y: s.y + BLDG_H / 2 + 16 };
+}
+
+// ─── AGENTS ───────────────────────────────────────────────────────────────────
+const agents = new Map();
+let colorIdx = 0;
+const recentSpawners = new Map();
+const IDLE_TIMEOUT = 50000;
+
+function isSlotTaken(slotIdx) {
+  for (const a of agents.values())
+    if (a.slotIdx === slotIdx) return true;
+  return false;
+}
+
+function assignSlot(sessionId, projectDir) {
+  const ex = agents.get(sessionId);
+  if (ex?.slotIdx != null) return ex.slotIdx;
+  const spawner = recentSpawners.get(projectDir);
+  if (spawner && Date.now() - spawner.time < 90000 && spawner.sessionId !== sessionId) {
+    const parent = agents.get(spawner.sessionId);
+    if (parent?.slotIdx != null) return parent.slotIdx;
+  }
+  for (let i = 0; i < BUILDING_SLOTS.length; i++)
+    if (!isSlotTaken(i)) return i;
+  return 0;
+}
+
+function getOrCreate(sessionId, projectDir) {
+  if (!agents.has(sessionId)) {
+    const ci = colorIdx % AGENT_COLORS.length;
+    agents.set(sessionId, {
+      id: sessionId, name: projectDir,
+      color: AGENT_COLORS[ci], colorIdx: colorIdx++,
+      pos: { x: TC_GATE.x - 10, y: TC_GATE.y },
+      slotIdx: null,
+      waypoints: [],
+      phase: 'idle',     // idle | to_work | working | to_idle
+      action: 'idle',
+      bubbleText: '', bubbleLife: 0,
+      lastEvent: Date.now(),
+      facing: 'right', walkTick: 0,
+      buildProgress: 0,
+    });
+  }
+  return agents.get(sessionId);
+}
+
+function planPathToWork(agent) {
+  const dst = workPos(agent.slotIdx);
+  const viaX = TC_GATE.x + 55 + (agent.colorIdx % 4) * 8;
+  agent.waypoints = [{ x: viaX, y: dst.y }, dst];
+}
+
+function planPathToTC(agent) {
+  const viaX = TC_GATE.x + 55 + (agent.colorIdx % 4) * 8;
+  agent.waypoints = [
+    { x: viaX, y: agent.pos.y },
+    { x: TC_GATE.x, y: TC_GATE.y + (agent.colorIdx % 3 - 1) * 14 },
+  ];
+}
+
+// ─── DRAWING PRIMITIVES ───────────────────────────────────────────────────────
+function rr(x, y, w, h, r) {
+  r = Math.min(r, w/2, h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+function gBox(x,y,w,h,fill,r=3,sw=1.5) {
+  ctx.fillStyle=fill; rr(x,y,w,h,r); ctx.fill();
+  ctx.strokeStyle=OUTLINE; ctx.lineWidth=sw; rr(x,y,w,h,r); ctx.stroke();
+}
+function depthBox(x,y,w,h,topC,faceC,faceH,rad=3) {
+  ctx.fillStyle=faceC; rr(x,y+h-faceH,w,faceH+rad,rad); ctx.fill();
+  ctx.fillStyle=topC;  rr(x,y,w,h-faceH+rad,rad); ctx.fill();
+  ctx.strokeStyle=OUTLINE; ctx.lineWidth=1.5; rr(x,y,w,h,rad); ctx.stroke();
+}
+function hexRgba(hex,a) {
+  const n=parseInt(hex.slice(1),16);
+  return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`;
+}
+
+// ─── TERRAIN ──────────────────────────────────────────────────────────────────
+// Pre-bake random values
+const RAND = (() => {
+  let s = 12345;
+  return () => { s=(s*1664525+1013904223)>>>0; return s/4294967296; };
+})();
+const grassPatches = Array.from({length:70}, () => ({
+  x:185+RAND()*700, y:10+RAND()*540, rx:12+RAND()*38, ry:6+RAND()*18, dk:RAND()>0.55,
+}));
+const rocks = Array.from({length:22}, () => ({
+  x:190+RAND()*680, y:15+RAND()*530, r:2+RAND()*5,
+}));
+
+function drawTerrain() {
+  // Dirt base
+  ctx.fillStyle = DIRT; ctx.fillRect(0,0,W,H);
+  // Subtle ploughed-dirt lines
+  ctx.strokeStyle = 'rgba(150,100,35,0.06)'; ctx.lineWidth = 1;
+  for (let i=0;i<W;i+=16) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i+8,H); ctx.stroke(); }
+
+  // Grass patches
+  for (const g of grassPatches) {
+    ctx.fillStyle = g.dk ? GRASS : GRASS_LT;
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath(); ctx.ellipse(g.x,g.y,g.rx,g.ry,0,0,Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // Stone roads from TC gate to each building
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  for (let i=0; i<BUILDING_SLOTS.length; i++) {
+    const s = BUILDING_SLOTS[i];
+    const wp = workPos(i);
+    const viaX = TC_GATE.x + 55;
+    ctx.strokeStyle = '#a07840'; ctx.lineWidth = 10; ctx.globalAlpha = 0.45;
+    ctx.beginPath();
+    ctx.moveTo(TC_GATE.x, TC_GATE.y);
+    ctx.lineTo(viaX, wp.y);
+    ctx.lineTo(wp.x - 10, wp.y);
+    ctx.stroke();
+    // Cobble dots
+    ctx.fillStyle = '#7a5828'; ctx.globalAlpha = 0.35;
+    for (let t=0.1; t<0.9; t+=0.12) {
+      const px = TC_GATE.x + (wp.x-10 - TC_GATE.x)*t + (i%2-0.5)*4;
+      const py = TC_GATE.y + (wp.y - TC_GATE.y)*t;
+      ctx.beginPath(); ctx.ellipse(px,py,3,2,0.4,0,Math.PI*2); ctx.fill();
+    }
+  }
+  ctx.globalAlpha = 1;
+
+  // Scatter rocks
+  for (const r of rocks) {
+    ctx.fillStyle = STONE_DK; ctx.globalAlpha = 0.5;
+    ctx.beginPath(); ctx.ellipse(r.x,r.y,r.r,r.r*0.6,0,0,Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // Forest border edges
+  ctx.fillStyle = GRASS;
+  ctx.fillRect(0,0,W,6); ctx.fillRect(0,H-6,W,6);
+  ctx.fillRect(0,0,6,H); ctx.fillRect(W-6,0,6,H);
+}
+
+// ─── TOWN CENTER (open courtyard — drawn in two passes) ───────────────────────
+const TC_HW=56, TC_HH=46, TC_WT=13, TC_GH=28; // half-extents, wall thickness, gate height
+
+function drawTCBase() {
+  const cx=TC.x, cy=TC.y, hw=TC_HW, hh=TC_HH, wt=TC_WT, gH=TC_GH;
+
+  // Courtyard floor
+  ctx.fillStyle='#b88038';
+  ctx.fillRect(cx-hw+wt, cy-hh+wt, hw*2-wt*2, hh*2-wt*2);
+  ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.lineWidth=1;
+  for (let gy=cy-hh+wt+4; gy<cy+hh-wt; gy+=10)
+    for (let gx=cx-hw+wt+4; gx<cx+hw-wt; gx+=14) {
+      ctx.beginPath(); ctx.rect(gx,gy,10,7); ctx.stroke();
+    }
+
+  // Helper: draw a wall top (flat rect + stone texture)
+  function wallTop(wx,wy,ww,wh) {
+    ctx.fillStyle=STONE_LT; ctx.strokeStyle=OUTLINE; ctx.lineWidth=1.2;
+    ctx.fillRect(wx,wy,ww,wh); ctx.strokeRect(wx,wy,ww,wh);
+    ctx.strokeStyle='rgba(0,0,0,0.07)'; ctx.lineWidth=1;
+    for (let lx=wx+6; lx<wx+ww-2; lx+=10) {
+      ctx.beginPath(); ctx.moveTo(lx,wy+1); ctx.lineTo(lx,wy+wh-1); ctx.stroke();
+    }
+  }
+
+  // Four wall stone tops
+  wallTop(cx-hw, cy-hh, hw*2, wt);                       // top
+  wallTop(cx-hw, cy-hh+wt, wt, hh*2-wt*2);              // left
+  const rsH = hh - wt - gH/2;
+  wallTop(cx+hw-wt, cy-hh+wt, wt, rsH);                  // right top (above gate)
+  wallTop(cx+hw-wt, cy+gH/2,  wt, rsH);                  // right bottom (below gate)
+  wallTop(cx-hw, cy+hh-wt, hw*2, wt);                    // bottom top surface
+
+  // Battlements — top wall
+  ctx.strokeStyle=OUTLINE; ctx.lineWidth=0.8;
+  for (let bx=cx-hw+4; bx<cx+hw-4; bx+=12) {
+    ctx.fillStyle=STONE_LT; ctx.fillRect(bx,cy-hh-5,7,6); ctx.strokeRect(bx,cy-hh-5,7,6);
+  }
+  // Battlements — left wall
+  for (let by=cy-hh+wt+4; by<cy+hh-wt-4; by+=12) {
+    ctx.fillStyle=STONE_LT; ctx.fillRect(cx-hw-5,by,6,7); ctx.strokeRect(cx-hw-5,by,6,7);
+  }
+
+  // Corner towers (all 4 — front face drawn in drawTCFront for bottom two)
+  const ts=18;
+  [[cx-hw-4,cy-hh-4],[cx+hw-ts+4,cy-hh-4],
+   [cx-hw-4,cy+hh-ts+4],[cx+hw-ts+4,cy+hh-ts+4]].forEach(([tx,ty]) => {
+    ctx.fillStyle=STONE_LT; ctx.strokeStyle=OUTLINE; ctx.lineWidth=1.2;
+    ctx.fillRect(tx,ty,ts,ts); ctx.strokeRect(tx,ty,ts,ts);
+    // Battlement on top edge of each tower
+    for (let b=tx+2; b<tx+ts-2; b+=7) {
+      ctx.fillRect(b,ty-4,5,5); ctx.strokeRect(b,ty-4,5,5);
+    }
+  });
+
+  // Gate arch on right wall
+  ctx.strokeStyle=STONE_LT; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.arc(cx+hw, cy, gH/2+2, -Math.PI/2, Math.PI/2); ctx.stroke();
+  // Portcullis bars
+  ctx.strokeStyle='rgba(100,70,20,0.45)'; ctx.lineWidth=1.5;
+  for (let gy=cy-gH/2; gy<cy+gH/2; gy+=5) {
+    ctx.beginPath(); ctx.moveTo(cx+hw-wt+1, gy); ctx.lineTo(cx+hw-1, gy); ctx.stroke();
+  }
+
+  // Flag pole on top-left tower
+  const fpx=cx-hw-4+9, fpy=cy-hh-4;
+  ctx.strokeStyle=WOOD_DK; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(fpx,fpy); ctx.lineTo(fpx,fpy-32); ctx.stroke();
+  const wave=Math.sin(tick*0.035)*2.5;
+  ctx.fillStyle='#cc1a1a';
+  ctx.beginPath(); ctx.moveTo(fpx,fpy-32); ctx.lineTo(fpx+22+wave,fpy-24+wave*0.3); ctx.lineTo(fpx,fpy-16); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#881010'; ctx.lineWidth=1; ctx.stroke();
+  ctx.fillStyle='#ffdda0'; ctx.font='bold 7px "Courier New"'; ctx.textAlign='left';
+  ctx.fillText('CC', fpx+2, fpy-20);
+}
+
+function drawTCFront() {
+  const cx=TC.x, cy=TC.y, hw=TC_HW, hh=TC_HH, wt=TC_WT, ts=18;
+  // Bottom wall front face strip
+  ctx.fillStyle=STONE_DK; ctx.lineWidth=1.2; ctx.strokeStyle=OUTLINE;
+  ctx.fillRect(cx-hw, cy+hh-7, hw*2, 7); ctx.strokeRect(cx-hw, cy+hh-7, hw*2, 7);
+  // Bottom corner tower front faces
+  [cx-hw-4, cx+hw-ts+4].forEach(tx => {
+    ctx.fillStyle=STONE_DK;
+    ctx.fillRect(tx, cy+hh-7+4, ts, 7); ctx.strokeRect(tx, cy+hh-7+4, ts, 7);
+  });
+}
+
+// ─── BUILDING ─────────────────────────────────────────────────────────────────
+function drawBuilding(slotIdx, agentsHere) {
+  if (!agentsHere.length) return;
+  const slot = BUILDING_SLOTS[slotIdx];
+  const main = agentsHere[0];
+  const p = main.buildProgress;
+  const cx=slot.x, cy=slot.y;
+  const x=cx-BLDG_W/2, y=cy-BLDG_H/2;
+  const aCol = ACTION_COLORS[main.action] || ACTION_COLORS.idle;
+
+  if (p < 0.15) {
+    // Foundation / construction start
+    ctx.strokeStyle=WOOD; ctx.lineWidth=2; ctx.setLineDash([4,4]);
+    ctx.strokeRect(x,y,BLDG_W,BLDG_H); ctx.setLineDash([]);
+    [[x,y],[x+BLDG_W-5,y],[x,y+BLDG_H-9],[x+BLDG_W-5,y+BLDG_H-9]].forEach(([px,py]) => {
+      ctx.fillStyle=WOOD; ctx.fillRect(px,py,5,9);
+      ctx.strokeStyle=OUTLINE; ctx.lineWidth=1; ctx.strokeRect(px,py,5,9);
+    });
+    // Under construction sign
+    ctx.fillStyle='#f0c040'; rr(cx-22,cy-12,44,22,3); ctx.fill();
+    ctx.strokeStyle=OUTLINE; ctx.lineWidth=1.2; rr(cx-22,cy-12,44,22,3); ctx.stroke();
+    ctx.fillStyle='#1a1208'; ctx.font='bold 8px "Courier New"'; ctx.textAlign='center';
+    ctx.fillText('BUILDING...', cx, cy+3);
+    return;
+  }
+
+  if (p < 0.55) {
+    // Partial walls rising
+    const wallH = (BLDG_H+8) * ((p-0.15)/0.4);
+    const wy = cy + BLDG_H/2 - wallH;
+    ctx.fillStyle=STONE; ctx.fillRect(x,wy,BLDG_W,wallH);
+    ctx.strokeStyle=OUTLINE; ctx.lineWidth=1.2; ctx.strokeRect(x,wy,BLDG_W,wallH);
+    // Scaffolding
+    ctx.strokeStyle=WOOD; ctx.lineWidth=1.5;
+    [[x-4,y,x-4,cy+BLDG_H/2],[x+BLDG_W+4,y,x+BLDG_W+4,cy+BLDG_H/2]].forEach(([x1,y1,x2,y2]) => {
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    });
+    for (let sy=y;sy<cy+BLDG_H/2;sy+=12) {
+      ctx.beginPath(); ctx.moveTo(x-8,sy); ctx.lineTo(x+BLDG_W+8,sy); ctx.stroke();
+    }
+    return;
+  }
+
+  // Full building
+  // Shadow
+  ctx.fillStyle='rgba(0,0,0,0.2)';
+  ctx.beginPath(); ctx.ellipse(cx+3,cy+BLDG_H/2+8,BLDG_W/2+4,8,0,0,Math.PI*2); ctx.fill();
+
+  // Roof (thatch, fades in)
+  if (p > 0.72) {
+    const ra = Math.min(1,(p-0.72)/0.28);
+    ctx.globalAlpha = ra;
+    ctx.fillStyle=THATCH;
+    ctx.beginPath(); ctx.moveTo(cx,y-16); ctx.lineTo(x-5,y+8); ctx.lineTo(x+BLDG_W+5,y+8); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle=OUTLINE; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.strokeStyle=THATCH_DK; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(x-5,y+8); ctx.lineTo(cx,y-16); ctx.lineTo(x+BLDG_W+5,y+8); ctx.stroke();
+    // Thatch texture lines
+    ctx.strokeStyle='rgba(100,60,10,0.15)'; ctx.lineWidth=1;
+    for (let ti=-3;ti<=3;ti++) {
+      ctx.beginPath(); ctx.moveTo(cx+ti*9,y-16); ctx.lineTo(x-5+ti*4,y+8); ctx.stroke();
+    }
+    ctx.globalAlpha=1;
+  }
+
+  // Main walls + front face
+  depthBox(x,y,BLDG_W,BLDG_H,WALL_C,STONE_DK,BLDG_FACE_H,3);
+
+  // Stone texture on top
+  ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.lineWidth=1;
+  for (let gx=x+7;gx<x+BLDG_W-4;gx+=10) {
+    ctx.beginPath(); ctx.moveTo(gx,y+2); ctx.lineTo(gx,y+BLDG_H-BLDG_FACE_H); ctx.stroke();
+  }
+
+  // Windows on front face (glow with action color)
+  const winY = y + BLDG_H - BLDG_FACE_H + 3;
+  [[cx-22,winY],[cx+8,winY]].forEach(([wx,wy]) => {
+    gBox(wx,wy,12,11,WOOD_DK,2,1);
+    ctx.fillStyle=hexRgba(aCol, main.action==='idle' ? 0.15 : 0.65);
+    rr(wx+2,wy+2,8,7,1); ctx.fill();
+    if (main.action !== 'idle') {
+      // Window glow bloom
+      ctx.fillStyle=hexRgba(aCol,0.08+Math.sin(tick*0.06)*0.04);
+      ctx.beginPath(); ctx.ellipse(wx+6,wy+5,16,12,0,0,Math.PI*2); ctx.fill();
+    }
+  });
+
+  // Door
+  gBox(cx-6,y+BLDG_H-BLDG_FACE_H+2,12,16,WOOD_DK,2,1);
+  ctx.strokeStyle=hexRgba(WOOD,0.5); ctx.lineWidth=1;
+  for (let dp=y+BLDG_H-BLDG_FACE_H+4;dp<y+BLDG_H-2;dp+=4) {
+    ctx.beginPath(); ctx.moveTo(cx-4,dp); ctx.lineTo(cx+4,dp); ctx.stroke();
+  }
+
+  // Flag pole
+  const poleTop = p > 0.72 ? y - 30 : y - 20;
+  ctx.strokeStyle=WOOD_DK; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(cx,y-4); ctx.lineTo(cx,poleTop); ctx.stroke();
+  // Flag wave animation
+  const fwave = Math.sin(tick*0.04 + slotIdx)*2;
+  ctx.fillStyle=main.color;
+  ctx.beginPath();
+  ctx.moveTo(cx,poleTop);
+  ctx.lineTo(cx+18+fwave,poleTop+7+fwave*0.3);
+  ctx.lineTo(cx,poleTop+14);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle=hexRgba(main.color,0.7); ctx.lineWidth=1; ctx.stroke();
+
+}
+
+// ─── WORKER ───────────────────────────────────────────────────────────────────
+const HAIR_COLS = ['#2a1a08','#1a1018','#3a2010','#18100c','#382808','#160e0c'];
+const TOOL_DRAW = {
+  reading:   (x,y) => { gBox(x+7,y-16,10,8,'#3366cc',1,1); ctx.strokeStyle='#fff'; ctx.lineWidth=0.8; ctx.beginPath(); ctx.moveTo(x+12,y-16); ctx.lineTo(x+12,y-8); ctx.stroke(); },
+  typing:    (x,y) => { ctx.fillStyle='#aaa'; ctx.fillRect(x+7,y-18,11,4); ctx.fillStyle=WOOD; ctx.fillRect(x+11,y-14,3,9); ctx.strokeStyle=OUTLINE; ctx.lineWidth=0.8; ctx.strokeRect(x+7,y-18,11,4); ctx.strokeRect(x+11,y-14,3,9); },
+  terminal:  (x,y) => { gBox(x+6,y-18,14,11,'#0a1018',1,1); ctx.fillStyle='#22ee44'; ctx.font='5px "Courier New"'; ctx.textAlign='left'; ctx.fillText('>_',x+8,y-10); },
+  browsing:  (x,y) => { gBox(x+7,y-18,12,14,'#c8a030',2,1); ctx.strokeStyle='rgba(0,0,0,0.4)'; ctx.lineWidth=0.8; ctx.beginPath(); ctx.moveTo(x+13,y-18); ctx.lineTo(x+13,y-4); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x+7,y-11); ctx.lineTo(x+19,y-11); ctx.stroke(); },
+  spawning:  (x,y) => { ctx.strokeStyle='#ccccaa'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x+7,y-18); ctx.lineTo(x+16,y-6); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x+16,y-18); ctx.lineTo(x+7,y-6); ctx.stroke(); },
+  searching: (x,y) => { ctx.strokeStyle='#ffee22'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(x+11,y-13,5,0,Math.PI*2); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x+15,y-9); ctx.lineTo(x+18,y-6); ctx.stroke(); },
+};
+
+function drawWorker(a) {
+  const {pos:{x,y}, color, action, walkTick, phase, colorIdx:ci} = a;
+  const walking = a.waypoints.length > 0;
+  const bob = walking ? 0 : Math.sin(tick*0.045+ci)*0.9;
+  const aCol = ACTION_COLORS[action] || ACTION_COLORS.idle;
+
+  // Shadow
+  ctx.fillStyle='rgba(0,0,0,0.22)';
+  ctx.beginPath(); ctx.ellipse(x+1,y+7,8,3,0,0,Math.PI*2); ctx.fill();
+
+  // Legs
+  const swing = walking ? Math.sin(walkTick*0.38)*5 : 0;
+  ctx.fillStyle='#2a1a08';
+  ctx.fillRect(x-5,y+3+swing,4,7);
+  ctx.fillRect(x+1,y+3-swing,4,7);
+  // Boots
+  ctx.fillStyle='#1a0e04';
+  ctx.fillRect(x-6,y+8+swing,5,3);
+  ctx.fillRect(x+1,y+8-swing,5,3);
+
+  // Body (tunic)
+  ctx.fillStyle=color;
+  ctx.beginPath(); ctx.ellipse(x,y+bob,8,10,0,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle=hexRgba(OUTLINE,0.75); ctx.lineWidth=1; ctx.stroke();
+  // Tunic belt
+  ctx.strokeStyle=WOOD_DK; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(x-7,y+3+bob); ctx.lineTo(x+7,y+3+bob); ctx.stroke();
+  // Belt buckle
+  ctx.fillStyle='#c8a030'; ctx.fillRect(x-2,y+2+bob,4,3);
+
+  // Head
+  ctx.fillStyle=SKIN;
+  ctx.beginPath(); ctx.arc(x,y-8+bob,7,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle=hexRgba(OUTLINE,0.6); ctx.lineWidth=1; ctx.stroke();
+  // Hair cap
+  ctx.fillStyle=HAIR_COLS[ci%6];
+  ctx.beginPath(); ctx.arc(x,y-9+bob,7,Math.PI,0); ctx.closePath(); ctx.fill();
+  // Eyes
+  ctx.fillStyle='#1a0808';
+  ctx.fillRect(x-3,y-10+bob,2,2);
+  ctx.fillRect(x+1,y-10+bob,2,2);
+
+  // Action glow
+  if (action !== 'idle' && phase === 'working') {
+    ctx.fillStyle=hexRgba(aCol,0.07+Math.sin(tick*0.06)*0.04);
+    ctx.beginPath(); ctx.ellipse(x,y,18,22,0,0,Math.PI*2); ctx.fill();
+  }
+
+  // Raised arm + tool
+  if (action !== 'idle' && action !== 'thinking' && phase === 'working') {
+    ctx.strokeStyle=SKIN; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(x+6,y-2+bob); ctx.lineTo(x+13,y-12+bob); ctx.stroke();
+    ctx.save(); ctx.translate(0,bob);
+    const drawTool = TOOL_DRAW[action];
+    if (drawTool) drawTool(x,y);
+    else {
+      ctx.fillStyle=aCol; ctx.globalAlpha=0.85;
+      ctx.beginPath(); ctx.arc(x+12,y-14,4,0,Math.PI*2); ctx.fill();
+      ctx.globalAlpha=1;
+    }
+    ctx.restore();
+  }
+
+  // Thinking dots above head
+  if (action === 'thinking' && phase === 'working') {
+    const ph=(tick*0.07)%(Math.PI*2);
+    [0,1,2].forEach(i => {
+      ctx.globalAlpha=0.4+Math.sin(ph+i*1.0)*0.35;
+      ctx.fillStyle=ACTION_COLORS.thinking;
+      ctx.beginPath(); ctx.arc(x-5+i*5,y-22+bob-Math.sin(ph+i)*4,3,0,Math.PI*2); ctx.fill();
+    });
+    ctx.globalAlpha=1;
+  }
+}
+
+// ─── OVERLAYS ─────────────────────────────────────────────────────────────────
+function drawWorkerLabel(a) {
+  if (a.phase === 'idle') return;
+  const {pos:{x,y}, name, color, action} = a;
+  const aCol = ACTION_COLORS[action] || ACTION_COLORS.idle;
+  const lbl = action !== 'idle' ? (ACTION_LABELS[action]||action.toUpperCase()).slice(0,9) : name.slice(0,10);
+  ctx.font='bold 9px "Segoe UI",system-ui';
+  const tw=ctx.measureText(lbl).width, bw=tw+10, bh=14;
+  ctx.fillStyle='rgba(10,8,4,0.88)'; rr(x-bw/2,y-30,bw,bh,5); ctx.fill();
+  ctx.strokeStyle=hexRgba(aCol,0.6); ctx.lineWidth=1; rr(x-bw/2,y-30,bw,bh,5); ctx.stroke();
+  ctx.fillStyle=aCol; ctx.textAlign='center'; ctx.fillText(lbl,x,y-19);
+}
+
+function drawBubble(a) {
+  if (a.bubbleLife <= 0) return;
+  const {pos:{x,y}, bubbleText, bubbleLife, color} = a;
+  const alpha = Math.min(1,bubbleLife/30);
+  const text = bubbleText.length>32 ? bubbleText.slice(0,32)+'…' : bubbleText;
+  ctx.font='11px "Segoe UI",system-ui';
+  const tw=ctx.measureText(text).width, bw=tw+16, bh=22;
+  const bx=Math.max(10,Math.min(W-bw-10,x-bw/2)), by=y-56;
+  ctx.save(); ctx.globalAlpha=alpha;
+  gBox(bx,by,bw,bh,'#f4eddc',5,1.5);
+  ctx.strokeStyle=hexRgba(color,0.5); ctx.lineWidth=1.5; rr(bx,by,bw,bh,5); ctx.stroke();
+  const tx=Math.max(bx+8,Math.min(bx+bw-8,x));
+  ctx.fillStyle='#f4eddc';
+  ctx.beginPath(); ctx.moveTo(tx-4,by+bh); ctx.lineTo(tx+4,by+bh); ctx.lineTo(tx,by+bh+5); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#1a1208'; ctx.textAlign='left';
+  ctx.beginPath(); rr(bx+1,by+1,bw-2,bh-2,4); ctx.clip(); ctx.fillText(text,bx+8,by+15);
+  ctx.restore();
+}
+
+function drawTitleBar() {
+  ctx.fillStyle='rgba(10,8,4,0.94)'; ctx.fillRect(0,0,W,18);
+  ctx.font='10px "Courier New"'; ctx.fillStyle='rgba(200,160,60,0.9)'; ctx.textAlign='left';
+  ctx.fillText('⚔  AGE OF AGENTS  //  CLAUDE CODE VISUALIZER', 10, 13);
+  ctx.fillStyle='rgba(140,100,40,0.7)'; ctx.textAlign='right';
+  const working=[...agents.values()].filter(a=>a.phase==='working').length;
+  ctx.fillText(`${agents.size} agent${agents.size!==1?'s':''} · ${working} working`, W-10, 13);
+}
+
+function drawEmptyState() {
+  ctx.textAlign='center';
+  ctx.fillStyle='rgba(200,160,60,0.5)'; ctx.font='16px "Segoe UI",system-ui';
+  ctx.fillText('No agents deployed', W/2, H/2-10);
+  ctx.fillStyle='rgba(150,110,40,0.4)'; ctx.font='12px "Segoe UI",system-ui';
+  ctx.fillText('Start Claude Code, or send a task below', W/2, H/2+14);
+}
+
+// ─── SSE ──────────────────────────────────────────────────────────────────────
+function connect() {
+  const es = new EventSource('/events');
+  es.onopen  = () => { statusEl.textContent = 'connected — watching sessions'; };
+  es.onerror = () => { statusEl.textContent = 'reconnecting...'; es.close(); setTimeout(connect,2000); };
+  es.onmessage = e => {
+    const ev    = JSON.parse(e.data);
+    const agent = getOrCreate(ev.sessionId, ev.projectDir);
+
+    if (ev.action === 'spawning')
+      recentSpawners.set(ev.projectDir, { sessionId: ev.sessionId, time: Date.now() });
+
+    agent.action    = ev.action;
+    agent.lastEvent = Date.now();
+    agent.bubbleText = ev.detail;
+    agent.bubbleLife = 240;
+
+    if (agent.slotIdx == null)
+      agent.slotIdx = assignSlot(ev.sessionId, ev.projectDir);
+
+    const age = ev.timestamp ? Date.now() - new Date(ev.timestamp).getTime() : 0;
+    if (agent.phase === 'idle' || agent.phase === 'to_idle') {
+      if (age < 30000) {
+        agent.phase = 'to_work';
+        planPathToWork(agent);
+      } else {
+        const wp = workPos(agent.slotIdx);
+        agent.pos = { x: wp.x, y: wp.y };
+        agent.phase = 'working';
+      }
+    }
+
+  };
+}
+
+
+// Load project list from server config
+fetch('/config').then(r => r.json()).then(data => {
+  const map = data.projectMap || {};
+  promptProject.innerHTML = '<option value="">-- project --</option>';
+  for (const label of Object.keys(map)) {
+    const o = document.createElement('option');
+    o.value = map[label]; o.textContent = label;
+    promptProject.appendChild(o);
+  }
+}).catch(() => {});
+
+connect();
+
+// ─── PROMPT ───────────────────────────────────────────────────────────────────
+async function sendPrompt() {
+  const prompt = promptInput.value.trim();
+  if (!prompt) return;
+  const projectDir = promptProject.value || '';
+  promptSend.disabled = true; promptSend.textContent = '...';
+  try {
+    const r = await fetch('/prompt', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ prompt, projectDir, apiKey: localStorage.getItem('anthropic_api_key') || '' }),
+    });
+    const data = await r.json();
+    if (data.ok) {
+      promptInput.value = '';
+      statusEl.textContent = `Task deployed to ${projectDir||'Git'} — watching for agent...`;
+    } else {
+      statusEl.textContent = 'Error: ' + (data.error||'unknown');
+    }
+  } catch(e) {
+    statusEl.textContent = 'Failed: ' + e.message;
+  } finally {
+    promptSend.disabled = false; promptSend.textContent = 'DEPLOY';
+  }
+}
+promptSend.addEventListener('click', sendPrompt);
+promptInput.addEventListener('keydown', e => { if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendPrompt(); } });
+
+// ─── UPDATE ───────────────────────────────────────────────────────────────────
+function updateAgents() {
+  const now = Date.now();
+  for (const a of agents.values()) {
+    // Build progress
+    if (a.slotIdx != null && a.buildProgress < 1)
+      a.buildProgress = Math.min(1, a.buildProgress + 0.0025);
+
+    // Idle timeout → return to TC, reset building for next time
+    if (a.phase === 'working' && now - a.lastEvent > IDLE_TIMEOUT) {
+      a.phase = 'to_idle'; a.action = 'idle';
+      a.buildProgress = 0;
+      planPathToTC(a);
+    }
+
+    // Movement
+    if (a.waypoints.length > 0) {
+      const t = a.waypoints[0];
+      const dx=t.x-a.pos.x, dy=t.y-a.pos.y;
+      const d = Math.sqrt(dx*dx+dy*dy);
+      if (d < 2) {
+        a.pos.x=t.x; a.pos.y=t.y; a.waypoints.shift();
+        if (!a.waypoints.length) {
+          if (a.phase==='to_work') a.phase='working';
+          if (a.phase==='to_idle') a.phase='idle';
+        }
+      } else {
+        const sp = Math.min(1.7, d);
+        a.pos.x+=dx/d*sp; a.pos.y+=dy/d*sp;
+        a.facing = Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');
+        a.walkTick++;
+      }
+    }
+    if (a.bubbleLife > 0) a.bubbleLife--;
+  }
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+let tick = 0;
+function render() {
+  ctx.clearRect(0,0,W,H);
+  drawTerrain();
+
+  // Painter's algorithm: collect all drawables
+  const drawables = [];
+
+  // Town Center — back (walls+courtyard) before workers, front (bottom face) after workers
+  drawables.push({ sortY: TC.y - TC_HH - 10, draw: drawTCBase });
+  drawables.push({ sortY: TC.y + TC_HH + 2,  draw: drawTCFront });
+
+  // Buildings (group agents by slot)
+  const slotMap = new Map();
+  for (const a of agents.values()) {
+    if (a.slotIdx != null) {
+      if (!slotMap.has(a.slotIdx)) slotMap.set(a.slotIdx, []);
+      slotMap.get(a.slotIdx).push(a);
+    }
+  }
+  for (const [idx, list] of slotMap) {
+    const s = BUILDING_SLOTS[idx];
+    drawables.push({ sortY: s.y + BLDG_H/2 + 22, draw: () => drawBuilding(idx, list) });
+  }
+
+  // Workers
+  for (const a of agents.values())
+    drawables.push({ sortY: a.pos.y + 8, draw: () => drawWorker(a) });
+
+  drawables.sort((a,b) => a.sortY - b.sortY);
+  for (const d of drawables) d.draw();
+
+  // Overlays
+  for (const a of agents.values()) { drawWorkerLabel(a); drawBubble(a); }
+  if (agents.size === 0) drawEmptyState();
+  drawTitleBar();
+
+  updateAgents();
+  tick++;
+  requestAnimationFrame(render);
+}
+render();
+</script>
+</body>
+</html>
