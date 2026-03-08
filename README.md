@@ -1,4 +1,4 @@
-# Claude Code Agent Visualizer
+# Claude Code Agent Visualizer: Pixel Agents
 
 A real-time visualizer that renders active [Claude Code](https://claude.ai/code) sessions as animated characters working in different environments. Each agent appears as a character that walks to its workspace, raises tools matching its current action (reading, writing, terminal, browsing, thinking, spawning sub-agents, etc.), and shows speech bubbles with task details.
 
