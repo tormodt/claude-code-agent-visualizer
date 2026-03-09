@@ -302,9 +302,11 @@ const server = http.createServer((req, res) => {
     });
     res.write(': connected\n\n');
 
-    // Send current known states to new client
+    // Send current known states to new client — only recent sessions
+    const cutoff = Date.now() - 2 * 60 * 1000;
     for (const event of initialStates.values()) {
-      res.write(`data: ${JSON.stringify(event)}\n\n`);
+      const ts = event.timestamp ? new Date(event.timestamp).getTime() : 0;
+      if (ts > cutoff) res.write(`data: ${JSON.stringify(event)}\n\n`);
     }
 
     clients.add(res);

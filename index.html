@@ -688,7 +688,7 @@ function connect() {
     if (ev.action === 'spawning')
       recentSpawners.set(ev.projectDir, { sessionId: ev.sessionId, time: Date.now() });
     agent.action    = ev.action;
-    agent.lastEvent = Date.now();
+    agent.lastEvent = ev.timestamp ? new Date(ev.timestamp).getTime() : Date.now();
     agent.bubbleText = ev.detail;
     agent.bubbleLife = 240;
     if (agent.slotIdx == null)
