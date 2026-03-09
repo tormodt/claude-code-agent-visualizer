@@ -263,7 +263,7 @@ function drawBackground() {
   ctx.fillRect(LOUNGE_W+8, DOOR_Y+DOOR_H-4, 3, 8);
 
   // TV on lounge wall — wide, same width as sofa
-  const TVX=42, TVY=34, TVW=148, TVH=30;
+  const TVX=42, TVY=30, TVW=148, TVH=42;
   ctx.fillStyle='rgba(0,0,0,0.25)';
   ctx.fillRect(TVX+3, TVY+3, TVW+4, TVH+4);
   ctx.fillStyle = TV_FRAME;
@@ -280,7 +280,7 @@ function drawBackground() {
   }
   ctx.fillStyle = 'rgba(120,160,255,0.7)';
   ctx.font = 'bold 9px "Courier New"'; ctx.textAlign='center';
-  ctx.fillText('CLAUDE CODE', TVX+TVW/2+2, TVY+21);
+  ctx.fillText('TV 2 Play', TVX+TVW/2+2, TVY+27);
   // TV stand
   ctx.fillStyle = '#1a1828';
   ctx.fillRect(TVX+TVW/2-4, TVY+TVH+4, 8, 8);
