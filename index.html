@@ -803,7 +803,7 @@ function render() {
 
   // Town Center — back (walls+courtyard) before workers, front (bottom face) after workers
   drawables.push({ sortY: TC.y - TC_HH - 10, draw: drawTCBase });
-  drawables.push({ sortY: TC.y + TC_HH + 2,  draw: drawTCFront });
+  drawables.push({ sortY: TC.y + TC_HH + 2, _isTCFront: true, draw: drawTCFront });
 
   // Buildings (group agents by slot)
   const slotMap = new Map();
@@ -818,12 +818,18 @@ function render() {
     drawables.push({ sortY: s.y + BLDG_H/2 + 22, draw: () => drawBuilding(idx, list) });
   }
 
-  // Workers
-  for (const a of agents.values())
-    drawables.push({ sortY: a.pos.y + 8, draw: () => drawWorker(a) });
+  // Remove TCFront from drawables so we can re-apply it after workers
+  const tcFront = drawables.find(d => d._isTCFront);
+  const filteredDrawables = drawables.filter(d => !d._isTCFront);
+  filteredDrawables.sort((a,b) => a.sortY - b.sortY);
+  for (const d of filteredDrawables) d.draw();
 
-  drawables.sort((a,b) => a.sortY - b.sortY);
-  for (const d of drawables) d.draw();
+  // Workers always drawn after all furniture so they're never hidden behind buildings
+  const sortedWorkers = [...agents.values()].sort((a,b) => a.pos.y - b.pos.y);
+  for (const a of sortedWorkers) drawWorker(a);
+
+  // TC front wall drawn last so it appears in front of workers inside the camp
+  if (tcFront) tcFront.draw();
 
   // Overlays
   for (const a of agents.values()) { drawWorkerLabel(a); drawBubble(a); }
