@@ -2,12 +2,12 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Office Space</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%231a1828'/><text y='24' x='3' font-size='24'>🖥</text></svg>">
+<title>Office Tower</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%2318181e'/><text y='24' x='3' font-size='24'>🏢</text></svg>">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #1a1828; display: flex; flex-direction: column; align-items: center; padding: 12px; font-family: 'Segoe UI', system-ui, sans-serif; }
-  canvas { display: block; border: 2px solid #3a3060; border-radius: 4px; box-shadow: 0 8px 48px rgba(0,0,0,0.9); }
+  body { background: #181822; display: flex; flex-direction: column; align-items: center; padding: 12px; font-family: 'Segoe UI', system-ui, sans-serif; }
+  canvas { display: block; border: 2px solid #38385a; border-radius: 4px; box-shadow: 0 8px 48px rgba(10,18,60,0.95); }
   #api-bar { width: 100%; display: flex; gap: 8px; margin-top: 8px; align-items: center; }
   #api-bar label { font-size: 10px; color: #5a4878; font-family: 'Courier New', monospace; white-space: nowrap; letter-spacing: 1px; }
   #api-key { flex: 1; background: #12101e; color: #9080c0; border: 1px solid #2a2040; border-radius: 3px; padding: 5px 10px; font-size: 12px; font-family: 'Courier New', monospace; outline: none; }
@@ -72,26 +72,34 @@ resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
-const CARPET     = '#1a1630';
-const TILE       = '#16161e';
-const PARTITION  = '#38346a';
-const DESK_TOP   = '#4a3c2a';
-const DESK_FACE  = '#342a1c';
-const DESK_LEG   = '#221a10';
-const CHAIR_C    = '#4a3e88';
-const CHAIR_SEAT = '#6050a8';
-const COUCH_BACK = '#3a2c68';
-const COUCH_SEAT = '#5448a0';
-const COUCH_ARM  = '#2e2258';
-const TV_FRAME   = '#0e0c18';
-const TV_SCR     = '#050710';
-const TBL_TOP    = '#403422';
-const TBL_FACE   = '#2a2014';
-const POT_C      = '#8c3e18';
-const LEAF_G     = '#3a6e2a';
-const LEAF_DK    = '#224018';
-const OUTLINE    = '#2e2c50';
-const SKIN       = '#f0c888';
+const FLOOR_C      = '#18181e';
+const SOCIAL_FLOOR = '#1c1828';
+const WALL_C       = '#2a2a38';
+const WINDOW_C     = '#2a4a68';
+const WINDOW_GLOW  = '#3a6a90';
+const CORE_C       = '#222230';
+const CORE_WALL    = '#323244';
+const ELEV_DOOR    = '#3a3a50';
+const ELEV_FRAME   = '#4a4a68';
+const STAIR_C      = '#2c2c3c';
+const DESK_TOP     = '#2e2a42';
+const DESK_FACE    = '#22202e';
+const DESK_LEG     = '#181620';
+const CHAIR_C      = '#3a3858';
+const CHAIR_SEAT   = '#4e4a72';
+const COUCH_BACK   = '#382c5a';
+const COUCH_SEAT   = '#4a3e74';
+const COUCH_ARM    = '#2c2244';
+const CARPET       = '#1e1a30';
+const OUTLINE      = '#2e2c50';
+const SKIN         = '#f0c888';
+const PARTITION    = '#38346a';
+const TV_SCR       = '#050710';
+const TBL_TOP      = '#2e2a42';
+const TBL_FACE     = '#22202e';
+const POT_C        = '#8c3e18';
+const LEAF_G       = '#3a6e2a';
+const LEAF_DK      = '#224018';
 
 const ACTION_COLORS = {
   thinking:'#9966ff', reading:'#ffaa22', typing:'#22dd88',
@@ -109,17 +117,26 @@ const AGENT_COLORS = ['#e83878','#28c87a','#2888e8','#e8b828','#9838e8','#e83828
 const HAIR_COLS   = ['#1a1018','#2a1a08','#3a2010','#18100c','#382808','#160e0c'];
 
 // ─── LAYOUT ───────────────────────────────────────────────────────────────────
-const LOUNGE_W  = 220;
 const DESK_SLOTS = 8;
 
-// 8 individual desks + 2 group tables (collab tables)
+// 8 individual desks (left wing + right wing) + 2 group tables (social area)
 const BUILDING_SLOTS = [
-  { x: 308, y: 148 }, { x: 443, y: 148 }, { x: 578, y: 148 }, { x: 713, y: 148 },
-  { x: 308, y: 295 }, { x: 443, y: 295 }, { x: 578, y: 295 }, { x: 713, y: 295 },
-  { x: 385, y: 448 }, { x: 660, y: 448 },
+  // Left wing desks (4 desks, 2 cols x 2 rows) — left of core
+  { x: 130, y: 145 },  // slot 0
+  { x: 215, y: 145 },  // slot 1
+  { x: 130, y: 228 },  // slot 2
+  { x: 215, y: 228 },  // slot 3
+  // Right wing desks (4 desks, 2 cols x 2 rows) — right of core
+  { x: 685, y: 145 },  // slot 4
+  { x: 770, y: 145 },  // slot 5
+  { x: 685, y: 228 },  // slot 6
+  { x: 770, y: 228 },  // slot 7
+  // Group tables in social area (bottom)
+  { x: 280, y: 458 },  // slot 8
+  { x: 620, y: 458 },  // slot 9
 ];
 
-const LOUNGE_GATE = { x: LOUNGE_W, y: 280 };
+const LOUNGE_GATE = { x: 450, y: 440 };
 
 function workPos(agent) {
   const idx = agent.slotIdx;
@@ -178,20 +195,55 @@ function getOrCreate(sessionId, projectDir) {
   return agents.get(sessionId);
 }
 
+// ─── PATHFINDING ──────────────────────────────────────────────────────────────
+const CORE_X1 = 340, CORE_X2 = 560, CORE_Y2 = 300;
+
 function planPathToWork(agent) {
   const dst = workPos(agent);
-  const viaX = LOUNGE_W + 18 + (agent.colorIdx % 4) * 8;
-  agent.waypoints = [{ x: viaX, y: dst.y }, dst];
+  if (agent.slotIdx >= DESK_SLOTS) {
+    // Group tables in social area — walk straight
+    agent.waypoints = [dst];
+    return;
+  }
+  if (dst.x < CORE_X1) {
+    // Left wing: go left to bypass corridor, then up to desk row, then to desk
+    agent.waypoints = [
+      { x: CORE_X1 - 55, y: agent.pos.y },
+      { x: CORE_X1 - 55, y: dst.y },
+      dst,
+    ];
+  } else {
+    // Right wing: go right to bypass corridor, then up, then to desk
+    agent.waypoints = [
+      { x: CORE_X2 + 55, y: agent.pos.y },
+      { x: CORE_X2 + 55, y: dst.y },
+      dst,
+    ];
+  }
 }
 
 function planPathToLounge(agent) {
-  const lx = 105 + (agent.colorIdx % 5) * 18 - 36;
-  const ly = 248 + (agent.colorIdx % 4) * 14 - 21;
-  agent.waypoints = [
-    { x: LOUNGE_W + 10, y: agent.pos.y },
-    { x: LOUNGE_W - 8,  y: ly },
-    { x: lx, y: ly },
-  ];
+  const lx = 160 + (agent.colorIdx % 7) * 90;
+  const ly = 430 + (agent.colorIdx % 3) * 18;
+  if (agent.slotIdx == null || agent.slotIdx >= DESK_SLOTS) {
+    agent.waypoints = [{ x: lx, y: ly }];
+    return;
+  }
+  if (agent.pos.x < CORE_X1) {
+    // From left wing
+    agent.waypoints = [
+      { x: CORE_X1 - 55, y: agent.pos.y },
+      { x: CORE_X1 - 55, y: CORE_Y2 + 55 },
+      { x: lx, y: ly },
+    ];
+  } else {
+    // From right wing
+    agent.waypoints = [
+      { x: CORE_X2 + 55, y: agent.pos.y },
+      { x: CORE_X2 + 55, y: CORE_Y2 + 55 },
+      { x: lx, y: ly },
+    ];
+  }
 }
 
 // ─── DRAWING PRIMITIVES ───────────────────────────────────────────────────────
@@ -227,129 +279,253 @@ function drawPlant(cx, cy) {
   }
 }
 
-// ─── BACKGROUND ───────────────────────────────────────────────────────────────
-function drawBackground() {
-  // Lounge carpet
-  ctx.fillStyle = CARPET;
-  ctx.fillRect(0, 0, LOUNGE_W, H);
-  ctx.strokeStyle = 'rgba(150,120,220,0.08)'; ctx.lineWidth = 1;
-  for (let x=0; x<LOUNGE_W; x+=10) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
-  for (let y=0; y<H; y+=10) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(LOUNGE_W,y); ctx.stroke(); }
+// ─── CENTRAL CORE ─────────────────────────────────────────────────────────────
+function drawCentralCore() {
+  const cx1=340, cy1=90, cx2=560, cy2=300;
+  const cw=cx2-cx1, ch=cy2-cy1;
 
-  // Office tile floor
-  ctx.fillStyle = TILE;
-  ctx.fillRect(LOUNGE_W, 0, W-LOUNGE_W, H);
-  ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1;
-  for (let x=LOUNGE_W; x<W; x+=50) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
-  for (let y=0; y<H; y+=50) { ctx.beginPath(); ctx.moveTo(LOUNGE_W,y); ctx.lineTo(W,y); ctx.stroke(); }
+  // Core block shadow
+  ctx.fillStyle='rgba(0,0,0,0.5)';
+  ctx.fillRect(cx1+4, cy1+4, cw, ch);
 
-  // Glass partition with door opening at y=250–320
-  const DOOR_Y=250, DOOR_H=70;
-  // Glass panels (above and below door)
-  [[0, DOOR_Y], [DOOR_Y+DOOR_H, H-(DOOR_Y+DOOR_H)]].forEach(([y, h]) => {
-    ctx.fillStyle = 'rgba(100,80,200,0.22)';
-    ctx.fillRect(LOUNGE_W, y, 8, h);
-    ctx.fillStyle = 'rgba(160,140,255,0.35)';
-    ctx.fillRect(LOUNGE_W+2, y, 2, h);
-    ctx.fillStyle = PARTITION;
-    ctx.fillRect(LOUNGE_W-2, y, 3, h);
-    ctx.fillRect(LOUNGE_W+8, y, 3, h);
+  // Core outer wall
+  ctx.fillStyle=CORE_C;
+  ctx.fillRect(cx1, cy1, cw, ch);
+  ctx.strokeStyle=CORE_WALL; ctx.lineWidth=3;
+  ctx.strokeRect(cx1, cy1, cw, ch);
+
+  // ── Left elevator bay (2 elevators) ──────────────────────────────
+  const elevW=52, elevH=90;
+  const el1y=cy1+20;
+  const el2y=cy1+130;
+
+  [el1y, el2y].forEach((ey, ei) => {
+    const elx = cx1+14;
+    ctx.fillStyle='#1a1a28';
+    ctx.fillRect(elx, ey, elevW, elevH);
+    ctx.strokeStyle=ELEV_FRAME; ctx.lineWidth=2;
+    ctx.strokeRect(elx, ey, elevW, elevH);
+    ctx.fillStyle=ELEV_DOOR;
+    ctx.fillRect(elx+3, ey+10, elevW/2-5, elevH-20);
+    ctx.fillRect(elx+elevW/2+2, ey+10, elevW/2-5, elevH-20);
+    ctx.strokeStyle='rgba(100,100,160,0.5)'; ctx.lineWidth=1;
+    ctx.strokeRect(elx+3, ey+10, elevW/2-5, elevH-20);
+    ctx.strokeRect(elx+elevW/2+2, ey+10, elevW/2-5, elevH-20);
+    ctx.strokeStyle='rgba(60,60,100,0.8)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(elx+elevW/2, ey+10); ctx.lineTo(elx+elevW/2, ey+elevH-10); ctx.stroke();
+    ctx.fillStyle=ELEV_FRAME;
+    ctx.fillRect(elx+elevW-8, ey+elevH/2-16, 6, 12);
+    ctx.fillStyle='rgba(255,200,50,0.5)';
+    ctx.beginPath(); ctx.arc(elx+elevW-5, ey+elevH/2-12, 2, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(100,200,255,0.4)';
+    ctx.beginPath(); ctx.arc(elx+elevW-5, ey+elevH/2-6, 2, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(150,140,200,0.6)'; ctx.font='7px "Courier New"'; ctx.textAlign='center';
+    ctx.fillText('LIFT ' + (ei+1), elx+elevW/2, ey+elevH-3);
   });
-  // Door frame posts
-  ctx.fillStyle = PARTITION;
-  ctx.fillRect(LOUNGE_W-2, DOOR_Y-4, 3, 8);
-  ctx.fillRect(LOUNGE_W+8, DOOR_Y-4, 3, 8);
-  ctx.fillRect(LOUNGE_W-2, DOOR_Y+DOOR_H-4, 3, 8);
-  ctx.fillRect(LOUNGE_W+8, DOOR_Y+DOOR_H-4, 3, 8);
 
-  // TV on lounge wall — wide, same width as sofa
-  const TVX=42, TVY=30, TVW=148, TVH=42;
-  ctx.fillStyle='rgba(0,0,0,0.25)';
-  ctx.fillRect(TVX+3, TVY+3, TVW+4, TVH+4);
-  ctx.fillStyle = TV_FRAME;
-  rr(TVX, TVY, TVW+4, TVH+4, 3); ctx.fill();
-  ctx.fillStyle = TV_SCR;
-  ctx.fillRect(TVX+4, TVY+4, TVW, TVH);
-  // Screen glow
-  ctx.fillStyle = 'rgba(40,80,210,0.15)';
-  ctx.fillRect(TVX+4, TVY+4, TVW, TVH);
-  // Horizontal scanlines
-  ctx.strokeStyle = 'rgba(80,120,255,0.2)'; ctx.lineWidth=1;
-  for (let ly=TVY+10; ly<TVY+TVH; ly+=8) {
-    ctx.beginPath(); ctx.moveTo(TVX+6, ly); ctx.lineTo(TVX+TVW-2, ly); ctx.stroke();
+  // ── Right elevator bay ────────────────────────────────────────────
+  const erx = cx2-14-elevW;
+  [el1y, el2y].forEach((ey, ei) => {
+    ctx.fillStyle='#1a1a28';
+    ctx.fillRect(erx, ey, elevW, elevH);
+    ctx.strokeStyle=ELEV_FRAME; ctx.lineWidth=2;
+    ctx.strokeRect(erx, ey, elevW, elevH);
+    ctx.fillStyle=ELEV_DOOR;
+    ctx.fillRect(erx+3, ey+10, elevW/2-5, elevH-20);
+    ctx.fillRect(erx+elevW/2+2, ey+10, elevW/2-5, elevH-20);
+    ctx.strokeStyle='rgba(100,100,160,0.5)'; ctx.lineWidth=1;
+    ctx.strokeRect(erx+3, ey+10, elevW/2-5, elevH-20);
+    ctx.strokeRect(erx+elevW/2+2, ey+10, elevW/2-5, elevH-20);
+    ctx.strokeStyle='rgba(60,60,100,0.8)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(erx+elevW/2, ey+10); ctx.lineTo(erx+elevW/2, ey+elevH-10); ctx.stroke();
+    ctx.fillStyle=ELEV_FRAME; ctx.fillRect(erx+2, ey+elevH/2-16, 6, 12);
+    ctx.fillStyle='rgba(255,200,50,0.5)';
+    ctx.beginPath(); ctx.arc(erx+5, ey+elevH/2-12, 2, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(100,200,255,0.4)';
+    ctx.beginPath(); ctx.arc(erx+5, ey+elevH/2-6, 2, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(150,140,200,0.6)'; ctx.font='7px "Courier New"'; ctx.textAlign='center';
+    ctx.fillText('LIFT ' + (ei+3), erx+elevW/2, ey+elevH-3);
+  });
+
+  // ── Central staircase ─────────────────────────────────────────────
+  const sx=cx1+80, sy=cy1+16, sw=cw-160, sh=ch-32;
+  ctx.fillStyle=STAIR_C;
+  ctx.fillRect(sx, sy, sw, sh);
+  ctx.strokeStyle='rgba(80,80,120,0.6)'; ctx.lineWidth=1;
+  ctx.strokeRect(sx, sy, sw, sh);
+
+  const stepCount = 12;
+  const stepH = sh / stepCount;
+  for (let si=0; si<stepCount; si++) {
+    const sy2 = sy + si*stepH;
+    ctx.fillStyle = si%2===0 ? '#282838' : '#222232';
+    ctx.fillRect(sx+2, sy2, sw-4, stepH-1);
+    ctx.strokeStyle='rgba(100,100,160,0.5)'; ctx.lineWidth=0.8;
+    ctx.beginPath(); ctx.moveTo(sx+2, sy2+stepH-1); ctx.lineTo(sx+sw-2, sy2+stepH-1); ctx.stroke();
   }
-  ctx.fillStyle = 'rgba(120,160,255,0.7)';
-  ctx.font = 'bold 9px "Courier New"'; ctx.textAlign='center';
-  ctx.fillText('TV 2 Play', TVX+TVW/2+2, TVY+27);
-  // TV stand
-  ctx.fillStyle = '#1a1828';
-  ctx.fillRect(TVX+TVW/2-4, TVY+TVH+4, 8, 8);
-  ctx.fillRect(TVX+TVW/2-16, TVY+TVH+11, 32, 4);
+  ctx.strokeStyle='rgba(120,120,180,0.5)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(sx+8, sy+8); ctx.lineTo(sx+8, sy+sh-8); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(sx+sw-8, sy+8); ctx.lineTo(sx+sw-8, sy+sh-8); ctx.stroke();
 
-  // Plants
-  drawPlant(LOUNGE_W+18, 52);
-  drawPlant(LOUNGE_W+18, H-42);
-  drawPlant(8, 38);
-  drawPlant(8, H-38);
+  ctx.fillStyle='rgba(130,120,190,0.7)'; ctx.font='bold 9px "Courier New"'; ctx.textAlign='center';
+  ctx.fillText('STAIRS', cx1+cw/2, cy1+ch/2+4);
+  ctx.fillStyle='rgba(100,90,150,0.5)'; ctx.font='8px "Courier New"';
+  ctx.fillText('\u25b2 FLOOR 14 \u25bc', cx1+cw/2, cy1+ch-6);
 
-  // Section label
-  ctx.fillStyle = 'rgba(140,120,200,0.5)';
-  ctx.font = '9px "Segoe UI"'; ctx.textAlign='center';
-  ctx.fillText('LOUNGE', LOUNGE_W/2, H-14);
-  ctx.fillText('OFFICE', (LOUNGE_W+W)/2, H-14);
+  ctx.fillStyle='rgba(255,200,50,0.15)';
+  ctx.fillRect(cx1, cy1, cw, 3);
+  ctx.fillRect(cx1, cy2-3, cw, 3);
+  ctx.fillRect(cx1, cy1, 3, ch);
+  ctx.fillRect(cx2-3, cy1, 3, ch);
 }
 
-// ─── COUCH + COFFEE TABLE ─────────────────────────────────────────────────────
-function drawCouch() {
-  const CX=118, CY=270;
+// ─── BACKGROUND ───────────────────────────────────────────────────────────────
+function drawBackground() {
+  ctx.fillStyle = FLOOR_C;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.lineWidth=1;
+  for (let x=0; x<W; x+=50) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for (let y=0; y<H; y+=50) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+  ctx.fillStyle = WALL_C;
+  ctx.fillRect(0, 0, W, 20);
+  ctx.fillRect(0, H-20, W, 20);
+  ctx.fillRect(0, 0, 20, H);
+  ctx.fillRect(W-20, 0, 20, H);
+
+  // Top windows
+  for (let wx=50; wx<W-50; wx+=60) {
+    ctx.fillStyle=WINDOW_C; ctx.fillRect(wx, 2, 36, 16);
+    ctx.fillStyle=WINDOW_GLOW; ctx.fillRect(wx, 2, 36, 3);
+    ctx.strokeStyle='rgba(80,140,200,0.3)'; ctx.lineWidth=0.5; ctx.strokeRect(wx,2,36,16);
+  }
+  // Left windows
+  for (let wy=50; wy<H-80; wy+=65) {
+    ctx.fillStyle=WINDOW_C; ctx.fillRect(2, wy, 16, 40);
+    ctx.fillStyle=WINDOW_GLOW; ctx.fillRect(2, wy, 3, 40);
+    ctx.strokeStyle='rgba(80,140,200,0.3)'; ctx.lineWidth=0.5; ctx.strokeRect(2,wy,16,40);
+  }
+  // Right windows
+  for (let wy=50; wy<H-80; wy+=65) {
+    ctx.fillStyle=WINDOW_C; ctx.fillRect(W-18, wy, 16, 40);
+    ctx.fillStyle=WINDOW_GLOW; ctx.fillRect(W-18+13, wy, 3, 40);
+    ctx.strokeStyle='rgba(80,140,200,0.3)'; ctx.lineWidth=0.5; ctx.strokeRect(W-18,wy,16,40);
+  }
+  // Bottom windows
+  for (let wx=50; wx<W-50; wx+=70) {
+    ctx.fillStyle=WINDOW_C; ctx.fillRect(wx, H-18, 44, 16);
+    ctx.fillStyle='rgba(100,160,220,0.2)'; ctx.fillRect(wx, H-18, 44, 16);
+    ctx.strokeStyle='rgba(80,140,200,0.3)'; ctx.lineWidth=0.5; ctx.strokeRect(wx,H-18,44,16);
+  }
+
+  // Social area carpet
+  ctx.fillStyle = SOCIAL_FLOOR;
+  ctx.fillRect(20, 368, W-40, H-40-368);
+  ctx.strokeStyle='rgba(150,120,220,0.07)'; ctx.lineWidth=1;
+  for (let x=20; x<W-20; x+=12) { ctx.beginPath(); ctx.moveTo(x,368); ctx.lineTo(x,H-20); ctx.stroke(); }
+  for (let y=368; y<H-20; y+=12) { ctx.beginPath(); ctx.moveTo(20,y); ctx.lineTo(W-20,y); ctx.stroke(); }
+
+  // Glass wall with door opening
+  const DOOR_X = 420, DOOR_W = 60;
+  ctx.fillStyle='rgba(100,80,200,0.18)'; ctx.fillRect(22, 366, DOOR_X-22, 8);
+  ctx.fillStyle='rgba(160,140,255,0.3)'; ctx.fillRect(22, 366, DOOR_X-22, 2);
+  ctx.fillStyle=PARTITION; ctx.fillRect(22, 363, DOOR_X-22, 4);
+  ctx.fillStyle='rgba(100,80,200,0.18)'; ctx.fillRect(DOOR_X+DOOR_W, 366, W-22-DOOR_X-DOOR_W, 8);
+  ctx.fillStyle='rgba(160,140,255,0.3)'; ctx.fillRect(DOOR_X+DOOR_W, 366, W-22-DOOR_X-DOOR_W, 2);
+  ctx.fillStyle=PARTITION; ctx.fillRect(DOOR_X+DOOR_W, 363, W-22-DOOR_X-DOOR_W, 4);
+  ctx.fillStyle=PARTITION;
+  ctx.fillRect(DOOR_X-3, 358, 4, 16);
+  ctx.fillRect(DOOR_X+DOOR_W-1, 358, 4, 16);
+
+  // Central core
+  drawCentralCore();
+
+  // Zone labels
+  ctx.fillStyle='rgba(120,100,180,0.5)'; ctx.font='9px "Segoe UI"'; ctx.textAlign='center';
+  ctx.fillText('SOCIAL', W/2, H-24);
+  ctx.fillText('WORKFLOOR', W/2, 35);
+  ctx.fillStyle='rgba(100,80,160,0.4)';
+  ctx.fillText('LEFT WING', 130, 35);
+  ctx.fillText('RIGHT WING', 770, 35);
+}
+
+// ─── SOCIAL AREA ──────────────────────────────────────────────────────────────
+function drawSocialArea() {
   // Rug
-  ctx.fillStyle='rgba(80,55,140,0.1)';
-  rr(CX-82, CY-32, 164, 100, 10); ctx.fill();
-  ctx.strokeStyle='rgba(80,55,140,0.18)'; ctx.lineWidth=1;
-  rr(CX-82, CY-32, 164, 100, 10); ctx.stroke();
-  rr(CX-74, CY-24, 148, 84, 7); ctx.stroke();
+  ctx.fillStyle='rgba(70,50,130,0.12)';
+  rr(100, 388, 700, 130, 12); ctx.fill();
+  ctx.strokeStyle='rgba(80,60,140,0.2)'; ctx.lineWidth=1;
+  rr(100, 388, 700, 130, 12); ctx.stroke();
+  rr(110, 395, 680, 116, 9); ctx.stroke();
 
-  // Couch shadow
-  ctx.fillStyle='rgba(0,0,0,0.14)';
-  ctx.beginPath(); ctx.ellipse(CX, CY+28, 72, 10, 0, 0, Math.PI*2); ctx.fill();
-
-  // Armrests
-  ctx.fillStyle = COUCH_ARM;
-  rr(CX-74, CY-16, 14, 46, 4); ctx.fill();
-  ctx.strokeStyle=OUTLINE; ctx.lineWidth=1; rr(CX-74, CY-16, 14, 46, 4); ctx.stroke();
-  rr(CX+60, CY-16, 14, 46, 4); ctx.fill();
-  rr(CX+60, CY-16, 14, 46, 4); ctx.stroke();
-
-  // Back cushions
-  ctx.fillStyle = COUCH_BACK;
-  rr(CX-60, CY-16, 120, 22, 5); ctx.fill();
-  ctx.strokeStyle=OUTLINE; ctx.lineWidth=1.2; rr(CX-60, CY-16, 120, 22, 5); ctx.stroke();
-  // Cushion seams
-  ctx.strokeStyle='rgba(255,255,255,0.07)'; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(CX-20,CY-16); ctx.lineTo(CX-20,CY+6); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(CX+20,CY-16); ctx.lineTo(CX+20,CY+6); ctx.stroke();
-
-  // Seat
-  ctx.fillStyle = COUCH_SEAT;
-  rr(CX-60, CY+6, 120, 26, 4); ctx.fill();
-  ctx.strokeStyle=OUTLINE; ctx.lineWidth=1.2; rr(CX-60, CY+6, 120, 26, 4); ctx.stroke();
+  // Couch (left side)
+  const CX=200, CY=450;
+  ctx.fillStyle='rgba(0,0,0,0.15)';
+  ctx.beginPath(); ctx.ellipse(CX, CY+32, 78, 10, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle=COUCH_ARM;
+  rr(CX-78, CY-14, 14, 46, 4); ctx.fill();
+  ctx.strokeStyle=OUTLINE; ctx.lineWidth=1; rr(CX-78, CY-14, 14, 46, 4); ctx.stroke();
+  rr(CX+64, CY-14, 14, 46, 4); ctx.fill(); rr(CX+64, CY-14, 14, 46, 4); ctx.stroke();
+  ctx.fillStyle=COUCH_BACK;
+  rr(CX-64, CY-14, 128, 22, 5); ctx.fill();
+  ctx.strokeStyle=OUTLINE; ctx.lineWidth=1.2; rr(CX-64, CY-14, 128, 22, 5); ctx.stroke();
   ctx.strokeStyle='rgba(255,255,255,0.06)'; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(CX-20,CY+6); ctx.lineTo(CX-20,CY+32); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(CX+20,CY+6); ctx.lineTo(CX+20,CY+32); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(CX-20,CY-14); ctx.lineTo(CX-20,CY+8); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(CX+20,CY-14); ctx.lineTo(CX+20,CY+8); ctx.stroke();
+  ctx.fillStyle=COUCH_SEAT;
+  rr(CX-64, CY+8, 128, 26, 4); ctx.fill();
+  ctx.strokeStyle=OUTLINE; ctx.lineWidth=1.2; rr(CX-64, CY+8, 128, 26, 4); ctx.stroke();
 
   // Coffee table
-  const TX=CX, TY=CY+48;
-  ctx.fillStyle='rgba(0,0,0,0.1)';
-  ctx.beginPath(); ctx.ellipse(TX, TY+10, 50, 8, 0, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle='#1e1a12';
-  rr(TX-46, TY-2, 92, 24, 5); ctx.fill();
-  ctx.strokeStyle=OUTLINE; ctx.lineWidth=1.2; rr(TX-46, TY-2, 92, 24, 5); ctx.stroke();
-  // Items on table
-  ctx.fillStyle='#2a2830'; rr(TX-20,TY+3,12,9,2); ctx.fill(); // mug
-  ctx.strokeStyle=OUTLINE; ctx.lineWidth=0.7; rr(TX-20,TY+3,12,9,2); ctx.stroke();
-  ctx.fillStyle='rgba(80,200,255,0.4)'; ctx.fillRect(TX-19,TY+4,10,5);
-  ctx.fillStyle='#1a1828'; rr(TX+4,TY+2,22,14,2); ctx.fill(); // laptop
-  ctx.fillStyle='rgba(40,80,200,0.4)'; rr(TX+5,TY+3,20,12,1); ctx.fill();
+  const TX=CX+10, TY=CY+52;
+  ctx.fillStyle='rgba(0,0,0,0.12)';
+  ctx.beginPath(); ctx.ellipse(TX,TY+8,52,7,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#1e1828';
+  rr(TX-48, TY-2, 96, 24, 5); ctx.fill();
+  ctx.strokeStyle=OUTLINE; ctx.lineWidth=1.2; rr(TX-48,TY-2,96,24,5); ctx.stroke();
+  ctx.fillStyle='#2a2830'; rr(TX-22,TY+3,12,9,2); ctx.fill();
+  ctx.strokeStyle=OUTLINE; ctx.lineWidth=0.7; rr(TX-22,TY+3,12,9,2); ctx.stroke();
+  ctx.fillStyle='rgba(80,200,255,0.4)'; ctx.fillRect(TX-21,TY+4,10,5);
+  ctx.fillStyle='#1a1828'; rr(TX+6,TY+2,22,14,2); ctx.fill();
+  ctx.fillStyle='rgba(40,80,200,0.4)'; rr(TX+7,TY+3,20,12,1); ctx.fill();
+
+  // Coffee machine
+  const VMX=720, VMY=420;
+  ctx.fillStyle='#1e1a2c';
+  rr(VMX, VMY, 44, 80, 4); ctx.fill();
+  ctx.strokeStyle='rgba(100,80,160,0.5)'; ctx.lineWidth=1.5; rr(VMX,VMY,44,80,4); ctx.stroke();
+  ctx.fillStyle='#0a0818';
+  rr(VMX+6, VMY+8, 32, 24, 2); ctx.fill();
+  ctx.fillStyle='rgba(60,160,255,0.4)';
+  rr(VMX+7, VMY+9, 30, 22, 1); ctx.fill();
+  ctx.fillStyle='rgba(200,220,255,0.7)'; ctx.font='6px "Courier New"'; ctx.textAlign='center';
+  ctx.fillText('COFFEE', VMX+22, VMY+22);
+  [0,1,2].forEach(bi => {
+    ctx.fillStyle=bi===0?'rgba(255,180,50,0.7)':'rgba(80,120,200,0.5)';
+    ctx.beginPath(); ctx.arc(VMX+14+bi*8, VMY+44, 4, 0, Math.PI*2); ctx.fill();
+  });
+  ctx.fillStyle='#0a0812'; ctx.fillRect(VMX+10, VMY+60, 24, 10);
+  ctx.strokeStyle='rgba(80,80,120,0.5)'; ctx.lineWidth=0.5; ctx.strokeRect(VMX+10,VMY+60,24,10);
+
+  // Snack machine
+  const VM2X=770;
+  ctx.fillStyle='#1c1e2a';
+  rr(VM2X, VMY, 44, 80, 4); ctx.fill();
+  ctx.strokeStyle='rgba(80,120,160,0.5)'; ctx.lineWidth=1.5; rr(VM2X,VMY,44,80,4); ctx.stroke();
+  ctx.fillStyle='#0a0c18'; rr(VM2X+6,VMY+8,32,24,2); ctx.fill();
+  ctx.fillStyle='rgba(50,200,100,0.35)'; rr(VM2X+7,VMY+9,30,22,1); ctx.fill();
+  ctx.fillStyle='rgba(180,255,200,0.7)'; ctx.font='6px "Courier New"'; ctx.textAlign='center';
+  ctx.fillText('SNACKS', VM2X+22, VMY+22);
+  [0,1,2,3].forEach(bi => {
+    ctx.fillStyle='rgba(100,180,100,0.5)';
+    ctx.beginPath(); ctx.arc(VM2X+12+bi*7, VMY+44, 3, 0, Math.PI*2); ctx.fill();
+  });
+
+  // Plants
+  drawPlant(820, 415);
+  drawPlant(80,  415);
+  drawPlant(450, 385);
 }
 
 // ─── DESK ─────────────────────────────────────────────────────────────────────
@@ -361,31 +537,23 @@ function drawDesk(slotIdx, agentsHere) {
   const aCol = agent ? (ACTION_COLORS[agent.action]||ACTION_COLORS.idle) : ACTION_COLORS.idle;
   const active = agent && agent.action !== 'idle' && agent.phase === 'working';
 
-  // Desk + chair shadow
   ctx.fillStyle = 'rgba(0,0,0,0.38)';
   ctx.beginPath(); ctx.ellipse(cx+2, cy+DH/2+20, DW/2+8, 9, 0, 0, Math.PI*2); ctx.fill();
-
-  // Chair shadow
   ctx.fillStyle = 'rgba(0,0,0,0.22)';
   ctx.beginPath(); ctx.ellipse(cx, cy+DH/2+18, 11, 4, 0, 0, Math.PI*2); ctx.fill();
 
-  // Chair legs (4 small pegs)
   ctx.fillStyle = '#1a1828';
   [[-9,12],[9,12],[-9,20],[9,20]].forEach(([ox,oy]) => {
     ctx.fillRect(cx+ox-1, cy+DH/2+oy, 2, 5);
   });
 
-  // Chair back
   ctx.fillStyle = active ? CHAIR_C : hexRgba(CHAIR_C, 0.7);
   rr(cx-11, cy+DH/2+5, 22, 15, 4); ctx.fill();
   ctx.strokeStyle=OUTLINE; ctx.lineWidth=active?1.2:0.8; rr(cx-11, cy+DH/2+5, 22, 15, 4); ctx.stroke();
-
-  // Chair seat (top strip, lighter)
   ctx.fillStyle = active ? CHAIR_SEAT : hexRgba(CHAIR_SEAT, 0.7);
   rr(cx-10, cy+DH/2+1, 20, 7, 2); ctx.fill();
   ctx.strokeStyle=OUTLINE; ctx.lineWidth=0.8; rr(cx-10, cy+DH/2+1, 20, 7, 2); ctx.stroke();
 
-  // Desk legs (two front legs, visible below face)
   const legW=5, legH=11;
   ctx.fillStyle = DESK_LEG;
   ctx.fillRect(cx-DW/2+3,  cy+DH/2-1, legW, legH);
@@ -394,22 +562,18 @@ function drawDesk(slotIdx, agentsHere) {
   ctx.strokeRect(cx-DW/2+3,  cy+DH/2-1, legW, legH);
   ctx.strokeRect(cx+DW/2-8,  cy+DH/2-1, legW, legH);
 
-  // Desk face (front panel, darker wood)
   ctx.fillStyle = DESK_FACE;
   rr(cx-DW/2, cy+DH/2-6, DW, 9, 1); ctx.fill();
   ctx.strokeStyle=OUTLINE; ctx.lineWidth=1; rr(cx-DW/2, cy+DH/2-6, DW, 9, 1); ctx.stroke();
 
-  // Desk top
   ctx.fillStyle = DESK_TOP;
   rr(cx-DW/2, cy-DH/2, DW, DH, 2); ctx.fill();
   ctx.strokeStyle=OUTLINE; ctx.lineWidth=1.2; rr(cx-DW/2, cy-DH/2, DW, DH, 2); ctx.stroke();
-  // Subtle wood grain
-  ctx.strokeStyle='rgba(0,0,0,0.12)'; ctx.lineWidth=1;
+  ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.lineWidth=1;
   for (let gx=cx-DW/2+9; gx<cx+DW/2-4; gx+=10) {
     ctx.beginPath(); ctx.moveTo(gx, cy-DH/2+2); ctx.lineTo(gx+3, cy+DH/2-2); ctx.stroke();
   }
 
-  // Monitor
   const mw=20, mh=14;
   ctx.fillStyle='#1e1c2e';
   rr(cx-mw/2, cy-DH/2+2, mw, mh, 2); ctx.fill();
@@ -424,11 +588,9 @@ function drawDesk(slotIdx, agentsHere) {
   ctx.fillRect(cx-2, cy-DH/2+mh+2, 4, 4);
   ctx.fillRect(cx-5, cy-DH/2+mh+5, 10, 2);
 
-  // Keyboard
   ctx.fillStyle='#252338';
   rr(cx-12, cy+3, 24, 8, 1); ctx.fill();
   ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=0.5; rr(cx-12, cy+3, 24, 8, 1); ctx.stroke();
-
 }
 
 // ─── GROUP TABLE ──────────────────────────────────────────────────────────────
@@ -438,44 +600,35 @@ function drawGroupTable(slotIdx, agentsHere) {
   const TW=168, TH=58;
   const chairXs = [cx-57, cx-19, cx+19, cx+57];
 
-  // Large shadow under whole assembly
   ctx.fillStyle='rgba(0,0,0,0.4)';
   ctx.beginPath(); ctx.ellipse(cx+3, cy+TH/2+18, TW/2+12, 12, 0, 0, Math.PI*2); ctx.fill();
 
-  // Chair shadows (bottom row)
   ctx.fillStyle='rgba(0,0,0,0.2)';
   for (const lx of chairXs) {
     ctx.beginPath(); ctx.ellipse(lx, cy+TH/2+20, 10, 4, 0, 0, Math.PI*2); ctx.fill();
   }
 
-  // Chairs top row (empty, faint)
   for (let i=0; i<3; i++) {
     const tx = cx-44+i*44;
     ctx.fillStyle = hexRgba(CHAIR_C, 0.4);
     rr(tx-10, cy-TH/2-14, 20, 14, 3); ctx.fill();
     ctx.strokeStyle=OUTLINE; ctx.lineWidth=0.6; rr(tx-10, cy-TH/2-14, 20, 14, 3); ctx.stroke();
-    // Chair legs top row
     ctx.fillStyle = '#1a1828';
     [[-8,13],[8,13]].forEach(([ox,oy]) => ctx.fillRect(tx+ox-1, cy-TH/2-14+oy, 2, 5));
   }
 
-  // Chairs bottom row with legs
   for (let i=0; i<4; i++) {
     const lx = chairXs[i];
     const occ = i < agentsHere.length;
-    // Chair legs
     ctx.fillStyle = '#1a1828';
     [[-8,13],[8,13]].forEach(([ox,oy]) => ctx.fillRect(lx+ox-1, cy+TH/2+4+oy, 2, 5));
-    // Chair back
     ctx.fillStyle = occ ? CHAIR_C : hexRgba(CHAIR_C, 0.5);
     rr(lx-10, cy+TH/2+4, 20, 14, 3); ctx.fill();
     ctx.strokeStyle=OUTLINE; ctx.lineWidth=occ?1.1:0.6; rr(lx-10, cy+TH/2+4, 20, 14, 3); ctx.stroke();
-    // Chair seat highlight
     ctx.fillStyle = occ ? CHAIR_SEAT : hexRgba(CHAIR_SEAT, 0.45);
     rr(lx-9, cy+TH/2+4, 18, 6, 2); ctx.fill();
   }
 
-  // Table legs (4 visible below front edge)
   const tlegH=13, tlegW=6;
   ctx.fillStyle = TBL_FACE;
   [[cx-TW/2+5], [cx-TW/2+55], [cx+TW/2-61], [cx+TW/2-11]].forEach(([lx]) => {
@@ -484,21 +637,18 @@ function drawGroupTable(slotIdx, agentsHere) {
     ctx.strokeRect(lx, cy+TH/2-2, tlegW, tlegH);
   });
 
-  // Table face (front panel)
   ctx.fillStyle = TBL_FACE;
   rr(cx-TW/2, cy+TH/2-7, TW, 10, 1); ctx.fill();
   ctx.strokeStyle=OUTLINE; ctx.lineWidth=1.1; rr(cx-TW/2, cy+TH/2-7, TW, 10, 1); ctx.stroke();
 
-  // Table top
   ctx.fillStyle = TBL_TOP;
   rr(cx-TW/2, cy-TH/2, TW, TH, 3); ctx.fill();
   ctx.strokeStyle=OUTLINE; ctx.lineWidth=1.5; rr(cx-TW/2, cy-TH/2, TW, TH, 3); ctx.stroke();
-  ctx.strokeStyle='rgba(0,0,0,0.12)'; ctx.lineWidth=1;
+  ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.lineWidth=1;
   for (let gx=cx-TW/2+12; gx<cx+TW/2-6; gx+=15) {
     ctx.beginPath(); ctx.moveTo(gx, cy-TH/2+3); ctx.lineTo(gx+4, cy+TH/2-3); ctx.stroke();
   }
 
-  // Laptops at each seat
   for (let i=0; i<4; i++) {
     const lx = chairXs[i];
     const a = agentsHere[i];
@@ -514,13 +664,11 @@ function drawGroupTable(slotIdx, agentsHere) {
     }
   }
 
-  // Water jug in center
   ctx.fillStyle='#1a2430';
   rr(cx-9, cy-10, 18, 22, 3); ctx.fill();
   ctx.strokeStyle='rgba(255,255,255,0.12)'; ctx.lineWidth=0.8; rr(cx-9, cy-10, 18, 22, 3); ctx.stroke();
   ctx.fillStyle='rgba(40,120,180,0.5)';
   rr(cx-7, cy-8, 14, 17, 2); ctx.fill();
-
 }
 
 // ─── WORKER ───────────────────────────────────────────────────────────────────
@@ -530,11 +678,9 @@ function drawWorker(a) {
   const bob = walking ? 0 : Math.sin(tick*0.045+ci)*0.9;
   const aCol = ACTION_COLORS[action]||ACTION_COLORS.idle;
 
-  // Shadow
   ctx.fillStyle='rgba(0,0,0,0.16)';
   ctx.beginPath(); ctx.ellipse(x+1,y+7,8,3,0,0,Math.PI*2); ctx.fill();
 
-  // Pants
   const sw = walking ? Math.sin(walkTick*0.38)*5 : 0;
   ctx.fillStyle='#2a2848';
   ctx.fillRect(x-5,y+3+sw,4,7);
@@ -543,22 +689,18 @@ function drawWorker(a) {
   ctx.fillRect(x-6,y+8+sw,5,3);
   ctx.fillRect(x+1,y+8-sw,5,3);
 
-  // Body / shirt
   ctx.fillStyle=color;
   ctx.beginPath(); ctx.ellipse(x,y+bob,8,10,0,0,Math.PI*2); ctx.fill();
   ctx.strokeStyle=hexRgba(OUTLINE,0.65); ctx.lineWidth=1; ctx.stroke();
-  // Collar
   ctx.strokeStyle='rgba(255,255,255,0.14)'; ctx.lineWidth=1.5;
   ctx.beginPath(); ctx.moveTo(x-2,y-8+bob); ctx.lineTo(x,y-4+bob); ctx.lineTo(x+2,y-8+bob); ctx.stroke();
-  // Pocket protector
   ctx.fillStyle='rgba(255,255,255,0.18)';
   ctx.fillRect(x-5,y-3+bob,5,5);
   ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=0.5;
   ctx.strokeRect(x-5,y-3+bob,5,5);
-  ctx.fillStyle='#e83878'; ctx.fillRect(x-4,y-5+bob,1,4); // pen 1
-  ctx.fillStyle='#2888e8'; ctx.fillRect(x-2,y-5+bob,1,4); // pen 2
+  ctx.fillStyle='#e83878'; ctx.fillRect(x-4,y-5+bob,1,4);
+  ctx.fillStyle='#2888e8'; ctx.fillRect(x-2,y-5+bob,1,4);
 
-  // Head
   ctx.fillStyle=SKIN;
   ctx.beginPath(); ctx.arc(x,y-8+bob,7,0,Math.PI*2); ctx.fill();
   ctx.strokeStyle=hexRgba(OUTLINE,0.5); ctx.lineWidth=1; ctx.stroke();
@@ -567,28 +709,24 @@ function drawWorker(a) {
   ctx.fillStyle='#1a1828';
   ctx.fillRect(x-3,y-10+bob,2,2);
   ctx.fillRect(x+1,y-10+bob,2,2);
-  // Glasses
   ctx.strokeStyle='#2a2440'; ctx.lineWidth=1.2;
   ctx.beginPath(); ctx.arc(x-2,y-10+bob,2.5,0,Math.PI*2); ctx.stroke();
   ctx.beginPath(); ctx.arc(x+2,y-10+bob,2.5,0,Math.PI*2); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(x-4.5,y-10+bob); ctx.lineTo(x+4.5,y-10+bob); ctx.stroke(); // bridge
-  ctx.beginPath(); ctx.moveTo(x-4.5,y-10+bob); ctx.lineTo(x-7,y-9+bob); ctx.stroke(); // left arm
-  ctx.beginPath(); ctx.moveTo(x+4.5,y-10+bob); ctx.lineTo(x+7,y-9+bob); ctx.stroke(); // right arm
+  ctx.beginPath(); ctx.moveTo(x-4.5,y-10+bob); ctx.lineTo(x+4.5,y-10+bob); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x-4.5,y-10+bob); ctx.lineTo(x-7,y-9+bob); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x+4.5,y-10+bob); ctx.lineTo(x+7,y-9+bob); ctx.stroke();
 
-  // Action glow
   if (action !== 'idle' && phase === 'working') {
     ctx.fillStyle=hexRgba(aCol,0.06+Math.sin(tick*0.06)*0.03);
     ctx.beginPath(); ctx.ellipse(x,y,18,22,0,0,Math.PI*2); ctx.fill();
   }
 
-  // Raised arm + tool
   if (action !== 'idle' && action !== 'thinking' && phase === 'working') {
     ctx.strokeStyle=SKIN; ctx.lineWidth=2;
     ctx.beginPath(); ctx.moveTo(x+6,y-2+bob); ctx.lineTo(x+12,y-11+bob); ctx.stroke();
     ctx.save(); ctx.translate(0, bob); drawOfficeTool(x, y, action, aCol); ctx.restore();
   }
 
-  // Thinking dots
   if (action === 'thinking' && phase === 'working') {
     const ph=(tick*0.07)%(Math.PI*2);
     [0,1,2].forEach(i => {
@@ -645,7 +783,7 @@ function drawBubble(a) {
   if (a.bubbleLife <= 0) return;
   const {pos:{x,y}, bubbleText, bubbleLife, color} = a;
   const alpha = Math.min(1,bubbleLife/30);
-  const text = bubbleText.length>32 ? bubbleText.slice(0,32)+'…' : bubbleText;
+  const text = bubbleText.length>32 ? bubbleText.slice(0,32)+'...' : bubbleText;
   ctx.font='11px "Segoe UI",system-ui';
   const tw=ctx.measureText(text).width, bw=tw+16, bh=22;
   const bx=Math.max(10,Math.min(W-bw-10,x-bw/2)), by=y-56;
@@ -662,17 +800,17 @@ function drawBubble(a) {
 
 function drawTitleBar() {
   ctx.fillStyle='rgba(14,12,28,0.94)'; ctx.fillRect(0,0,W,18);
-  ctx.font='10px "Courier New"'; ctx.fillStyle='rgba(160,140,220,0.9)'; ctx.textAlign='left';
-  ctx.fillText('[ ] OFFICE SPACE  //  CLAUDE CODE VISUALIZER', 10, 13);
-  ctx.fillStyle='rgba(120,100,180,0.7)'; ctx.textAlign='right';
+  ctx.font='10px "Courier New"'; ctx.fillStyle='rgba(160,180,220,0.9)'; ctx.textAlign='left';
+  ctx.fillText('[ ] OFFICE TOWER  //  CLAUDE CODE VISUALIZER', 10, 13);
+  ctx.fillStyle='rgba(120,140,180,0.7)'; ctx.textAlign='right';
   const working=[...agents.values()].filter(a=>a.phase==='working').length;
-  ctx.fillText(`${agents.size} agent${agents.size!==1?'s':''} · ${working} working`, W-10, 13);
+  ctx.fillText(`${agents.size} agent${agents.size!==1?'s':''} \u00b7 ${working} working`, W-10, 13);
 }
 
 function drawEmptyState() {
   ctx.textAlign='center';
   ctx.fillStyle='rgba(160,140,220,0.5)'; ctx.font='16px "Segoe UI",system-ui';
-  ctx.fillText('No agents in the office', W/2, H/2-10);
+  ctx.fillText('No agents on the floor', W/2, H/2-10);
   ctx.fillStyle='rgba(120,100,180,0.4)'; ctx.font='12px "Segoe UI",system-ui';
   ctx.fillText('Start Claude Code to see activity', W/2, H/2+14);
 }
@@ -680,7 +818,7 @@ function drawEmptyState() {
 // ─── SSE ──────────────────────────────────────────────────────────────────────
 function connect() {
   const es = new EventSource('/events');
-  es.onopen  = () => { statusEl.textContent = 'connected — watching sessions'; };
+  es.onopen  = () => { statusEl.textContent = 'connected \u2014 watching sessions'; };
   es.onerror = () => { statusEl.textContent = 'reconnecting...'; es.close(); setTimeout(connect, 2000); };
   es.onmessage = e => {
     const ev    = JSON.parse(e.data);
@@ -719,7 +857,7 @@ async function sendPrompt() {
       body: JSON.stringify({ prompt, projectDir: '', apiKey: localStorage.getItem('anthropic_api_key')||'' }),
     });
     const data = await r.json();
-    if (data.ok) { promptInput.value=''; statusEl.textContent='Task deployed — watching for agent...'; }
+    if (data.ok) { promptInput.value=''; statusEl.textContent='Task deployed \u2014 watching for agent...'; }
     else statusEl.textContent = 'Error: '+(data.error||'unknown');
   } catch(e) { statusEl.textContent = 'Failed: '+e.message; }
   finally { promptSend.disabled=false; promptSend.textContent='DEPLOY'; }
@@ -767,8 +905,8 @@ function render() {
 
   const drawables = [];
 
-  // Couch + coffee table (drawn before idle workers so workers appear on top)
-  drawables.push({ sortY: 244, draw: drawCouch });
+  // Social area furniture (drawn before idle workers so workers appear on top)
+  drawables.push({ sortY: 428, draw: drawSocialArea });
 
   // Desks & group tables
   const slotMap = new Map();
@@ -782,7 +920,7 @@ function render() {
     const agHere = slotMap.get(i) || [];
     const s = BUILDING_SLOTS[i];
     const sortY = i < DESK_SLOTS ? s.y + 20 : s.y + 22;
-    const ii = i; // capture for closure
+    const ii = i;
     drawables.push({ sortY, draw: () => (ii < DESK_SLOTS ? drawDesk : drawGroupTable)(ii, agHere) });
   }
 
