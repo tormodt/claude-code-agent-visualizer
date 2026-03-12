@@ -1023,12 +1023,12 @@ function render() {
     drawables.push({ sortY, draw: () => (ii < DESK_SLOTS ? drawDesk : drawGroupTable)(ii, agHere) });
   }
 
-  // Workers
-  for (const a of agents.values())
-    drawables.push({ sortY: a.pos.y + 8, draw: () => drawWorker(a) });
-
   drawables.sort((a,b) => a.sortY - b.sortY);
   for (const d of drawables) d.draw();
+
+  // Workers always drawn after all furniture so they're never hidden behind desks
+  const sortedWorkers = [...agents.values()].sort((a,b) => a.pos.y - b.pos.y);
+  for (const a of sortedWorkers) drawWorker(a);
 
   for (const a of agents.values()) { drawWorkerLabel(a); drawBubble(a); }
   if (agents.size === 0) drawEmptyState();
