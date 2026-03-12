@@ -22,6 +22,8 @@ Switch branches and reload to change the look.
 |--------|-------|---------|
 | `age-of-agents` | Medieval Age of Empires 4 — workers build structures in a walled settlement | ![age-of-agents](screenshots/age-of-agents.png) |
 | `office-space` | Modern office — agents work at individual desks or gather at collab tables, idle on the couch | ![office-space](screenshots/office-space.png) |
+| `minions-ws` | Despicable Me Minions workshop — yellow Minion characters work in Gru's underground lab, with sleeping pods, bubbling beakers, and hazard-striped walls | ![minions-ws](screenshots/minions-ws.png) |
+| `office-tower` | CS2-inspired office tower floor — agents navigate around a central stairwell and elevator bank from the social area at the bottom to desks on the left and right wings | ![office-tower](screenshots/office-tower.png) |
 
 ## Configuration
 
