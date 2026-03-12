@@ -1259,12 +1259,12 @@ function render() {
     drawables.push({ sortY, draw: () => (ii < DESK_SLOTS ? drawLabBench : drawLabTable)(ii, agHere) });
   }
 
-  // Minions
-  for (const a of agents.values())
-    drawables.push({ sortY: a.pos.y + 8, draw: () => drawMinion(a) });
-
   drawables.sort((a,b) => a.sortY - b.sortY);
   for (const d of drawables) d.draw();
+
+  // Minions always drawn after all furniture so they're never hidden behind desks/pods
+  const sortedMinions = [...agents.values()].sort((a,b) => a.pos.y - b.pos.y);
+  for (const a of sortedMinions) drawMinion(a);
 
   for (const a of agents.values()) { drawWorkerLabel(a); drawBubble(a); }
   if (agents.size === 0) drawEmptyState();
