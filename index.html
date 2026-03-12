@@ -777,41 +777,46 @@ function drawMinion(a) {
   const aCol = ACTION_COLORS[action]||ACTION_COLORS.idle;
   const isTall = ci % 3 === 0;
   const oneEye = ci % 3 === 1;
-  const bodyH = isTall ? 36 : 28;
-  const bodyW = isTall ? 12 : 15;
+  const bodyH = isTall ? 22 : 15;
+  const bodyW = isTall ? 13 : 15;
 
-  // Shadow
+  const legH = 12;
+
+  // Shadow (at ground level, no bob)
   ctx.fillStyle = 'rgba(0,0,0,0.25)';
-  ctx.beginPath(); ctx.ellipse(x+1, y+bodyH*0.5+10, bodyW+4, 4, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(x+1, y+bodyH+legH+4, bodyW+4, 4, 0, 0, Math.PI*2); ctx.fill();
 
   // Walking leg animation
   const sw = walking ? Math.sin(walkTick*0.38)*6 : 0;
 
-  // Legs (blue overalls color)
+  // Legs (blue overalls color) — drawn before body so body covers the tops
   ctx.fillStyle = OVERALLS;
-  ctx.fillRect(x-6, y+bodyH*0.3+bob, 5, 11+sw);
-  ctx.fillRect(x+1, y+bodyH*0.3+bob, 5, 11-sw);
-  // Shoes (black rounded — bigger, more cartoony)
+  ctx.fillRect(x-6, y+bodyH-6+bob, 5, legH+sw);
+  ctx.fillRect(x+1, y+bodyH-6+bob, 5, legH-sw);
+  // Shoes (black rounded — cartoony)
   ctx.fillStyle = '#111';
-  ctx.beginPath(); ctx.ellipse(x-4, y+bodyH*0.3+12+sw+bob, 7, 4, 0, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(x+4, y+bodyH*0.3+12-sw+bob, 7, 4, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(x-4, y+bodyH+legH+sw-2+bob, 7, 4, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(x+4, y+bodyH+legH-sw-2+bob, 7, 4, 0, 0, Math.PI*2); ctx.fill();
   // Shoe shine
   ctx.fillStyle = 'rgba(255,255,255,0.15)';
-  ctx.beginPath(); ctx.ellipse(x-5, y+bodyH*0.3+10+sw+bob, 3, 2, -0.4, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(x+3, y+bodyH*0.3+10-sw+bob, 3, 2, -0.4, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(x-5, y+bodyH+legH-4+sw+bob, 3, 2, -0.4, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(x+3, y+bodyH+legH-4-sw+bob, 3, 2, -0.4, 0, Math.PI*2); ctx.fill();
 
-  // Body (yellow ellipse — rounder, fatter)
+  // Body (yellow pill shape — rounded top and bottom)
   ctx.fillStyle = SKIN;
-  ctx.beginPath();
-  ctx.ellipse(x, y+bob, bodyW, bodyH, 0, 0, Math.PI*2);
+  rr(x-bodyW, y-bodyH+bob, bodyW*2, bodyH*2, bodyW);
   ctx.fill();
-  ctx.strokeStyle = 'rgba(180,140,0,0.5)'; ctx.lineWidth = 1.2; ctx.stroke();
+  ctx.strokeStyle = 'rgba(180,140,0,0.5)'; ctx.lineWidth = 1.2;
+  rr(x-bodyW, y-bodyH+bob, bodyW*2, bodyH*2, bodyW);
+  ctx.stroke();
 
-  // Overalls lower half
+  // Overalls lower half (clipped pill — covers bottom half of body)
   ctx.fillStyle = OVERALLS;
-  ctx.beginPath();
-  ctx.ellipse(x, y+bodyH*0.35+bob, bodyW, bodyH*0.65, 0, 0, Math.PI*2);
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x-bodyW-1, y+bob, bodyW*2+2, bodyH+2); ctx.clip();
+  rr(x-bodyW, y-bodyH+bob, bodyW*2, bodyH*2, bodyW);
   ctx.fill();
+  ctx.restore();
   // Overalls bib (bigger)
   ctx.fillStyle = hexRgba(OVERALLS, 0.9);
   rr(x-6, y-5+bob, 12, 10, 2); ctx.fill();
@@ -854,7 +859,7 @@ function drawMinion(a) {
 
   // Head (bigger, rounder)
   const headY = y - bodyH*0.75 + bob;
-  const headR = isTall ? 11 : 13;
+  const headR = isTall ? 10 : 11;
   ctx.fillStyle = SKIN;
   ctx.beginPath();
   ctx.ellipse(x, headY, headR, isTall ? headR*1.25 : headR, 0, 0, Math.PI*2);
@@ -938,7 +943,7 @@ function drawMinion(a) {
   // Action glow halo
   if (action !== 'idle' && phase === 'working') {
     ctx.fillStyle = hexRgba(aCol, 0.07+Math.sin(tick*0.06)*0.03);
-    ctx.beginPath(); ctx.ellipse(x, y, 26, 32, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(x, y+bob, bodyW+12, bodyH+8, 0, 0, Math.PI*2); ctx.fill();
   }
 
   // Raised arm + tool when working
@@ -1016,9 +1021,9 @@ function drawWorkerLabel(a) {
   const lbl = action !== 'idle' ? (ACTION_LABELS[action]||action.toUpperCase()).slice(0,9) : name.slice(0,10);
   ctx.font = 'bold 9px "Segoe UI",system-ui';
   const tw=ctx.measureText(lbl).width, bw=tw+10, bh=14;
-  ctx.fillStyle = 'rgba(14,12,10,0.90)'; rr(x-bw/2,y-30,bw,bh,5); ctx.fill();
-  ctx.strokeStyle = hexRgba(aCol,0.6); ctx.lineWidth = 1; rr(x-bw/2,y-30,bw,bh,5); ctx.stroke();
-  ctx.fillStyle = '#ffe040'; ctx.textAlign = 'center'; ctx.fillText(lbl,x,y-19);
+  ctx.fillStyle = 'rgba(14,12,10,0.90)'; rr(x-bw/2,y-52,bw,bh,5); ctx.fill();
+  ctx.strokeStyle = hexRgba(aCol,0.6); ctx.lineWidth = 1; rr(x-bw/2,y-52,bw,bh,5); ctx.stroke();
+  ctx.fillStyle = '#ffe040'; ctx.textAlign = 'center'; ctx.fillText(lbl,x,y-41);
 }
 
 function drawBubble(a) {
@@ -1028,7 +1033,7 @@ function drawBubble(a) {
   const text = bubbleText.length>32 ? bubbleText.slice(0,32)+'…' : bubbleText;
   ctx.font = '11px "Segoe UI",system-ui';
   const tw=ctx.measureText(text).width, bw=tw+16, bh=22;
-  const bx=Math.max(10,Math.min(W-bw-10,x-bw/2)), by=y-56;
+  const bx=Math.max(10,Math.min(W-bw-10,x-bw/2)), by=y-78;
   ctx.save(); ctx.globalAlpha=alpha;
   gBox(bx,by,bw,bh,'#1a1400',5,1.5);
   ctx.strokeStyle=hexRgba(color,0.6); ctx.lineWidth=1.5; rr(bx,by,bw,bh,5); ctx.stroke();
@@ -1062,6 +1067,88 @@ function drawEmptyState() {
   ctx.fillText('🍌', W/2, H/2 + 50);
 }
 
+// ─── DEMO MODE ────────────────────────────────────────────────────────────────
+const DEMO_SESSIONS = [
+  { id: 'demo-0', name: 'play-web'  },
+  { id: 'demo-1', name: 'play-ctv'  },
+  { id: 'demo-2', name: 'play-ios'  },
+  { id: 'demo-3', name: 'play-and'  },
+  { id: 'demo-4', name: 'ai-feed'   },
+  { id: 'demo-5', name: 'ai-cont'   },
+  { id: 'demo-6', name: 'player'    },
+  { id: 'demo-7', name: 'config'    },
+];
+
+const DEMO_BUBBLES = {
+  thinking:   ['Hmm, what if...', 'Computing...', 'Let me think...', 'Analyzing...'],
+  reading:    ['Reading docs...', 'Checking spec...', 'Reviewing code...', 'Scanning file...'],
+  typing:     ['Writing code...', 'Implementing...', 'Fixing the bug...', 'Adding feature...'],
+  terminal:   ['Running tests...', 'npm install...', 'git status', 'Compiling...'],
+  browsing:   ['Searching docs...', 'Fetching data...', 'Checking PR...', 'Loading page...'],
+  responding: ['Sending reply...', 'Explaining...', 'Almost done!', 'Here you go!'],
+  spawning:   ['Spawning agent...', 'Launching task...', 'Deploying...', 'Starting job...'],
+  tool:       ['Using tool...', 'Executing...', 'Running cmd...', 'Calling API...'],
+  searching:  ['Finding files...', 'Scanning repo...', 'Grep-ing...', 'Searching...'],
+};
+const DEMO_ACTIONS = Object.keys(DEMO_BUBBLES);
+
+function demoBubble(action) {
+  const list = DEMO_BUBBLES[action] || ['Working...'];
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+function runDemo() {
+  statusEl.textContent = 'demo mode — minions incoming';
+
+  // Spawn agents one by one with a stagger
+  DEMO_SESSIONS.forEach((s, i) => {
+    setTimeout(() => {
+      const agent = getOrCreate(s.id, s.name);
+      agent.slotIdx = i;
+      const action = DEMO_ACTIONS[i % DEMO_ACTIONS.length];
+      agent.action = action;
+      agent.bubbleText = demoBubble(action);
+      agent.bubbleLife = 200;
+      agent.lastEvent = Date.now();
+      agent.phase = 'to_work';
+      planPathToWork(agent);
+    }, i * 700);
+  });
+
+  // Cycle actions every ~4s while agents are working
+  const cycleInterval = setInterval(() => {
+    for (const a of agents.values()) {
+      if (!a.id.startsWith('demo-') || a.phase !== 'working') continue;
+      const action = DEMO_ACTIONS[Math.floor(Math.random() * DEMO_ACTIONS.length)];
+      a.action = action;
+      a.bubbleText = demoBubble(action);
+      a.bubbleLife = 200;
+      a.lastEvent = Date.now(); // keep idle timeout at bay
+    }
+  }, 4000);
+
+  // After 30s send all demo agents home
+  setTimeout(() => {
+    clearInterval(cycleInterval);
+    statusEl.textContent = 'demo — minions returning to pod bay';
+    for (const a of agents.values()) {
+      if (!a.id.startsWith('demo-')) continue;
+      a.phase = 'to_idle';
+      a.action = 'idle';
+      a.buildProgress = 0;
+      a.bubbleText = 'Bello! 🍌';
+      a.bubbleLife = 160;
+      planPathToLounge(a);
+    }
+    // Remove demo agents after they've had time to walk back
+    setTimeout(() => {
+      for (const id of [...agents.keys()])
+        if (id.startsWith('demo-')) agents.delete(id);
+      statusEl.textContent = 'demo ended — start Claude Code to see real minions';
+    }, 9000);
+  }, 30000);
+}
+
 // ─── SSE ──────────────────────────────────────────────────────────────────────
 function connect() {
   const es = new EventSource('/events');
@@ -1093,6 +1180,7 @@ function connect() {
 }
 
 connect();
+if (new URLSearchParams(window.location.search).get('demo') === 'true') runDemo();
 
 async function sendPrompt() {
   const prompt = promptInput.value.trim();
@@ -1152,8 +1240,8 @@ function render() {
 
   const drawables = [];
 
-  // Pod bay (drawn before idle minions so minions appear on top)
-  drawables.push({ sortY: 244, draw: drawPodBay });
+  // Pod bay (always behind minions — low sortY so all minions render in front)
+  drawables.push({ sortY: 100, draw: drawPodBay });
 
   // Lab benches & lab tables
   const slotMap = new Map();
