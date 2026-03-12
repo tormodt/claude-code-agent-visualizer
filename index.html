@@ -72,22 +72,22 @@ resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
-const LAB_FLOOR   = '#1a1a22';
-const POD_FLOOR   = '#131318';
-const METAL_WALL  = '#2a2a38';
-const POD_COLOR   = '#c8960a';
+const LAB_FLOOR   = '#080c0a';  // very dark greenish
+const POD_FLOOR   = '#060608';  // near black
+const METAL_WALL  = '#1c1428';  // dark purple-tinted
+const POD_COLOR   = '#c8900a';
 const POD_GLOW    = '#ffe040';
-const BENCH_TOP   = '#38383e';
-const BENCH_FACE  = '#28282e';
-const EQUIP_GREY  = '#4a4a52';
-const SKIN        = '#ffe040';
-const OVERALLS    = '#1565c0';
-const GOGGLE_RIM  = '#888898';
-const GOGGLE_LENS = '#e8f0f8';
-const OUTLINE     = '#2a2840';
-const CHAIR_C     = '#2a2a3a';
-const CHAIR_SEAT  = '#3a3a48';
-const CHEM_GREEN  = '#22ee88';
+const BENCH_TOP   = '#101820';  // dark panel
+const BENCH_FACE  = '#0a1018';
+const EQUIP_GREY  = '#3a4050';
+const SKIN        = '#ffe040';  // minion yellow
+const OVERALLS    = '#1565c0';  // minion blue
+const GOGGLE_RIM  = '#78889a';
+const GOGGLE_LENS = '#e8f8f0';
+const OUTLINE     = '#181428';
+const CHAIR_C     = '#1a2030';
+const CHAIR_SEAT  = '#222838';
+const CHEM_GREEN  = '#00ff88';  // vivid green chemicals
 
 const ACTION_COLORS = {
   thinking:'#9966ff', reading:'#ffaa22', typing:'#22dd88',
@@ -275,20 +275,24 @@ function drawBackground() {
   }
   ctx.restore();
 
-  // "GRU INDUSTRIES" sign
-  ctx.fillStyle = '#0a0a10';
-  rr(22, 28, 176, 26, 4); ctx.fill();
-  ctx.strokeStyle = '#ffe040'; ctx.lineWidth = 1; rr(22, 28, 176, 26, 4); ctx.stroke();
-  // Glow behind sign
-  ctx.fillStyle = 'rgba(255,220,0,0.04)';
-  rr(20, 26, 180, 30, 5); ctx.fill();
-  ctx.fillStyle = '#ffe040';
-  ctx.font = 'bold 10px "Courier New", monospace'; ctx.textAlign = 'center';
-  ctx.fillText('GRU INDUSTRIES', 110, 46);
-  // Small decorative dashes
-  ctx.fillStyle = 'rgba(255,220,0,0.4)';
-  ctx.font = '7px "Courier New"'; ctx.textAlign = 'center';
-  ctx.fillText('— AUTHORIZED MINIONS ONLY —', 110, 57);
+  // "GRU INDUSTRIES" neon sign
+  // Outer glow rings (neon effect)
+  [8,5,3,1].forEach((pad,i) => {
+    ctx.strokeStyle=`rgba(180,0,255,${0.04+i*0.03})`; ctx.lineWidth=pad*2;
+    rr(22-pad, 26-pad, 176+pad*2, 28+pad*2, 5+pad); ctx.stroke();
+  });
+  ctx.fillStyle='#08041a'; rr(22,26,176,28,5); ctx.fill();
+  // Purple border
+  ctx.strokeStyle='#aa00ff'; ctx.lineWidth=1.5; rr(22,26,176,28,5); ctx.stroke();
+  ctx.strokeStyle='rgba(200,100,255,0.4)'; ctx.lineWidth=0.5; rr(24,28,172,24,4); ctx.stroke();
+  // Title text with glow
+  ctx.shadowColor='#ffd700'; ctx.shadowBlur=8;
+  ctx.fillStyle='#ffd700'; ctx.font='bold 11px "Courier New"'; ctx.textAlign='center';
+  ctx.fillText('GRU INDUSTRIES', 110, 43);
+  ctx.shadowBlur=0;
+  // Subtitle
+  ctx.fillStyle='rgba(200,150,255,0.7)'; ctx.font='6px "Courier New"';
+  ctx.fillText('☢  AUTHORIZED MINIONS ONLY  ☢', 110, 54);
 
   // Banana decoration at bottom-left
   ctx.save();
@@ -313,22 +317,70 @@ function drawBackground() {
   ctx.fillStyle = LAB_FLOOR;
   ctx.fillRect(LOUNGE_W, 0, W - LOUNGE_W, H);
 
-  // Fine grid on lab floor
-  ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1;
-  for (let x = LOUNGE_W; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
-  for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(LOUNGE_W,y); ctx.lineTo(W,y); ctx.stroke(); }
+  // Green ambient glow from chemical vats
+  const labGlow = ctx.createRadialGradient(W-60, 80, 10, W-60, 80, 320);
+  labGlow.addColorStop(0, 'rgba(0,200,80,0.10)');
+  labGlow.addColorStop(1, 'rgba(0,200,80,0)');
+  ctx.fillStyle = labGlow; ctx.fillRect(LOUNGE_W, 0, W - LOUNGE_W, H);
+
+  // Diamond tile pattern on lab floor
+  ctx.strokeStyle = 'rgba(0,180,80,0.05)'; ctx.lineWidth = 1;
+  for (let x = LOUNGE_W; x < W; x += 44) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for (let y = 0; y < H; y += 44) { ctx.beginPath(); ctx.moveTo(LOUNGE_W,y); ctx.lineTo(W,y); ctx.stroke(); }
 
   // Hazard tape stripe along top of lab area
   ctx.save();
-  ctx.rect(LOUNGE_W, 0, W - LOUNGE_W, 12); ctx.clip();
+  ctx.rect(LOUNGE_W, 0, W - LOUNGE_W, 14); ctx.clip();
   for (let sx = LOUNGE_W - 20; sx < W + 20; sx += 18) {
-    ctx.fillStyle = (Math.floor((sx - LOUNGE_W)/18) % 2 === 0) ? 'rgba(255,220,0,0.3)' : 'rgba(180,0,0,0.25)';
+    ctx.fillStyle = (Math.floor((sx - LOUNGE_W)/18) % 2 === 0) ? 'rgba(255,220,0,0.5)' : 'rgba(0,0,0,0.7)';
     ctx.save(); ctx.translate(sx, 0);
     ctx.beginPath();
-    ctx.moveTo(0,0); ctx.lineTo(18,0); ctx.lineTo(18-4,12); ctx.lineTo(-4,12);
+    ctx.moveTo(0,0); ctx.lineTo(18,0); ctx.lineTo(18-4,14); ctx.lineTo(-4,14);
     ctx.closePath(); ctx.fill(); ctx.restore();
   }
   ctx.restore();
+
+  // PIPES along top of lab (y=14-30)
+  [[16,5,'rgba(0,200,100,0.5)','#0a1810'],[22,4,'rgba(100,50,255,0.4)','#0a0818'],[27,3,'rgba(255,60,60,0.3)','#180a0a']].forEach(([py,ph,sc,fc]) => {
+    ctx.fillStyle=fc; ctx.fillRect(LOUNGE_W,py,W-LOUNGE_W,ph);
+    ctx.strokeStyle=sc; ctx.lineWidth=0.8; ctx.strokeRect(LOUNGE_W,py,W-LOUNGE_W,ph);
+    // pipe joints every 80px
+    for (let jx=LOUNGE_W+40; jx<W-20; jx+=80) {
+      ctx.fillStyle=sc; ctx.beginPath(); ctx.arc(jx,py+ph/2,ph*0.9,0,Math.PI*2); ctx.fill();
+    }
+  });
+
+  // BIG BUBBLING VAT top-right corner
+  const vx=W-72, vy=32, vw=58, vh=72;
+  // Outer tank shadow
+  ctx.fillStyle='rgba(0,0,0,0.5)'; rr(vx+3,vy+3,vw,vh,6); ctx.fill();
+  // Tank body
+  ctx.fillStyle='#060e08'; rr(vx,vy,vw,vh,6); ctx.fill();
+  ctx.strokeStyle='rgba(0,255,100,0.6)'; ctx.lineWidth=2; rr(vx,vy,vw,vh,6); ctx.stroke();
+  // Liquid inside
+  ctx.fillStyle='rgba(0,180,60,0.18)'; rr(vx+3,vy+vh*0.35,vw-6,vh*0.62,4); ctx.fill();
+  // Liquid surface shimmer
+  const shimmer = Math.sin(tick*0.03)*3;
+  ctx.fillStyle='rgba(0,255,100,0.25)'; rr(vx+3,vy+vh*0.35+shimmer,vw-6,6,2); ctx.fill();
+  // Bubbles in vat
+  [0,1,2,3].forEach(bi => {
+    const bp=(tick*0.06+bi*1.4)%(Math.PI*2);
+    ctx.globalAlpha=0.4+Math.sin(bp)*0.4;
+    ctx.fillStyle='rgba(0,255,100,0.8)';
+    ctx.beginPath(); ctx.arc(vx+10+bi*12, vy+vh*0.5+Math.sin(bp)*18, 2+bi*0.5, 0, Math.PI*2); ctx.fill();
+  }); ctx.globalAlpha=1;
+  // Outer glow
+  ctx.fillStyle=`rgba(0,255,80,${0.04+Math.sin(tick*0.04)*0.02})`; rr(vx-6,vy-6,vw+12,vh+12,10); ctx.fill();
+  // Pipes coming out of vat
+  ctx.strokeStyle='rgba(0,200,80,0.5)'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(vx,vy+20); ctx.lineTo(LOUNGE_W,vy+20); ctx.stroke();
+  // Label
+  ctx.fillStyle='rgba(0,255,100,0.6)'; ctx.font='bold 7px "Courier New"'; ctx.textAlign='center';
+  ctx.fillText('VAT-7', vx+vw/2, vy+vh+12);
+  // Drip from vat
+  ctx.fillStyle='rgba(0,255,100,0.4)';
+  const dripY=(tick*0.5)%30;
+  ctx.beginPath(); ctx.arc(vx+vw/2, vy+vh+4+dripY, 1.5-dripY*0.05, 0, Math.PI*2); ctx.fill();
 
   // ── Metal divider wall ──────────────────────────────────────────────────────
   const DOOR_Y = 250, DOOR_H = 70;
@@ -460,110 +512,140 @@ function drawPodBay() {
   ctx.fillStyle = '#ffe040';
   ctx.font = '8px sans-serif'; ctx.textAlign = 'center';
   ctx.fillText('🍌 DISPENSER', bdx, bdy + 3);
+
+  // Banana pile on floor — scattered bananas
+  function drawBanana(bx, by, rot, scale) {
+    ctx.save();
+    ctx.translate(bx, by);
+    ctx.rotate(rot);
+    ctx.scale(scale, scale);
+    // Banana body (curved yellow shape)
+    ctx.strokeStyle = '#FFD700'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-8, 2);
+    ctx.quadraticCurveTo(0, -10, 8, 2);
+    ctx.stroke();
+    // Tip ends
+    ctx.strokeStyle = '#c8a800'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(-8, 2); ctx.lineTo(-9, 4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(8, 2); ctx.lineTo(9, 4); ctx.stroke();
+    ctx.restore();
+  }
+  // Scattered pile
+  drawBanana(52, 350, 0.3, 0.9);
+  drawBanana(68, 358, -0.5, 1.0);
+  drawBanana(44, 360, 1.1, 0.85);
+  drawBanana(80, 346, -1.2, 0.95);
+  drawBanana(60, 365, 0.7, 0.8);
+  drawBanana(36, 352, -0.2, 0.9);
+
+  // "FREE BANANAS" label
+  ctx.fillStyle = 'rgba(255,220,50,0.5)';
+  ctx.font = '6px "Courier New"'; ctx.textAlign = 'center';
+  ctx.fillText('FREE BANANAS', 60, 376);
 }
 
-// ─── LAB BENCH (replaces drawDesk) ────────────────────────────────────────────
+// ─── GADGET STATION (replaces drawDesk) ───────────────────────────────────────
 function drawLabBench(slotIdx, agentsHere) {
   const s = BUILDING_SLOTS[slotIdx];
   const cx = s.x, cy = s.y;
-  const DW = 54, DH = 36;
+  const DW = 58, DH = 40;
   const agent = agentsHere[0];
   const aCol = agent ? (ACTION_COLORS[agent.action] || ACTION_COLORS.idle) : ACTION_COLORS.idle;
   const active = agent && agent.action !== 'idle' && agent.phase === 'working';
+  const glowCol = active ? aCol : CHEM_GREEN;
 
-  // Shadow under bench + stool
-  ctx.fillStyle = 'rgba(0,0,0,0.38)';
-  ctx.beginPath(); ctx.ellipse(cx + 2, cy + DH/2 + 20, DW/2 + 8, 9, 0, 0, Math.PI*2); ctx.fill();
+  // Shadow
+  ctx.fillStyle='rgba(0,0,0,0.5)';
+  ctx.beginPath(); ctx.ellipse(cx+2,cy+DH/2+20,DW/2+6,8,0,0,Math.PI*2); ctx.fill();
 
-  // Lab stool shadow
-  ctx.fillStyle = 'rgba(0,0,0,0.22)';
-  ctx.beginPath(); ctx.ellipse(cx, cy + DH/2 + 18, 11, 4, 0, 0, Math.PI*2); ctx.fill();
+  // Stool
+  ctx.strokeStyle=active?'#2a3a50':'#161e28'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(cx,cy+DH/2+6); ctx.lineTo(cx,cy+DH/2+20); ctx.stroke();
+  ctx.fillStyle=active?CHAIR_SEAT:hexRgba(CHAIR_SEAT,0.6);
+  ctx.beginPath(); ctx.arc(cx,cy+DH/2+6,9,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle=active?hexRgba(aCol,0.5):'rgba(50,70,90,0.4)'; ctx.lineWidth=1; ctx.stroke();
 
-  // Stool pole
-  ctx.strokeStyle = EQUIP_GREY; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(cx, cy + DH/2 + 5); ctx.lineTo(cx, cy + DH/2 + 20); ctx.stroke();
+  // Station base (angled front panel with bright accent color)
+  ctx.fillStyle=BENCH_FACE;
+  rr(cx-DW/2,cy+DH/2-8,DW,11,2); ctx.fill();
+  ctx.strokeStyle=active?hexRgba(aCol,0.7):'rgba(0,120,80,0.4)'; ctx.lineWidth=1.5;
+  rr(cx-DW/2,cy+DH/2-8,DW,11,2); ctx.stroke();
+  // BUTTONS on front panel (3 colored buttons)
+  const btns = active ? [aCol,'#ff3322','#ffcc00'] : ['rgba(0,80,40,0.6)','rgba(60,10,5,0.6)','rgba(80,70,0,0.6)'];
+  btns.forEach((bc,bi) => {
+    ctx.fillStyle=bc; ctx.beginPath(); ctx.arc(cx-8+bi*8,cy+DH/2-2,3.5,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.5)'; ctx.lineWidth=0.5; ctx.stroke();
+    if (active) { ctx.fillStyle=hexRgba(bc,0.3); ctx.beginPath(); ctx.arc(cx-8+bi*8,cy+DH/2-2,5.5,0,Math.PI*2); ctx.fill(); }
+  });
 
-  // Stool seat (circular — lab stools have no back)
-  ctx.fillStyle = active ? CHAIR_SEAT : hexRgba(CHAIR_SEAT, 0.7);
-  ctx.beginPath(); ctx.arc(cx, cy + DH/2 + 5, 9, 0, Math.PI*2); ctx.fill();
-  ctx.strokeStyle = OUTLINE; ctx.lineWidth = active ? 1.2 : 0.8; ctx.stroke();
+  // Main control surface
+  ctx.fillStyle=BENCH_TOP; rr(cx-DW/2,cy-DH/2,DW,DH,3); ctx.fill();
+  ctx.strokeStyle=active?hexRgba(aCol,0.6):'rgba(0,100,60,0.35)'; ctx.lineWidth=1.5;
+  rr(cx-DW/2,cy-DH/2,DW,DH,3); ctx.stroke();
+  // Inset darker work area
+  ctx.fillStyle='rgba(0,0,0,0.35)'; rr(cx-DW/2+4,cy-DH/2+4,DW-8,DH-8,2); ctx.fill();
 
-  // Bench face panel
-  ctx.fillStyle = BENCH_FACE;
-  rr(cx - DW/2, cy + DH/2 - 6, DW, 9, 1); ctx.fill();
-  ctx.strokeStyle = OUTLINE; ctx.lineWidth = 1; rr(cx - DW/2, cy + DH/2 - 6, DW, 9, 1); ctx.stroke();
-
-  // Bench top
-  ctx.fillStyle = BENCH_TOP;
-  rr(cx - DW/2, cy - DH/2, DW, DH, 2); ctx.fill();
-  ctx.strokeStyle = OUTLINE; ctx.lineWidth = 1.2; rr(cx - DW/2, cy - DH/2, DW, DH, 2); ctx.stroke();
-  // Metal texture lines
-  ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
-  for (let gx = cx - DW/2 + 6; gx < cx + DW/2 - 4; gx += 6) {
-    ctx.beginPath(); ctx.moveTo(gx, cy - DH/2 + 2); ctx.lineTo(gx, cy + DH/2 - 2); ctx.stroke();
-  }
-
-  // Monitor
-  const mw = 20, mh = 14;
-  ctx.fillStyle = '#1e1c2e';
-  rr(cx - mw/2, cy - DH/2 + 2, mw, mh, 2); ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 0.8;
-  rr(cx - mw/2, cy - DH/2 + 2, mw, mh, 2); ctx.stroke();
-  ctx.fillStyle = active ? hexRgba(aCol, 0.85) : '#050710';
-  rr(cx - mw/2 + 1.5, cy - DH/2 + 3, mw - 3, mh - 3, 1); ctx.fill();
+  // SCREEN (left of panel)
+  const mw=20,mh=15;
+  ctx.fillStyle='#030608'; rr(cx-DW/2+4,cy-DH/2+4,mw,mh,2); ctx.fill();
+  ctx.fillStyle=active?hexRgba(aCol,0.9):'rgba(0,50,20,0.5)';
+  rr(cx-DW/2+5,cy-DH/2+5,mw-2,mh-2,1); ctx.fill();
   if (active) {
-    ctx.fillStyle = hexRgba(aCol, 0.11 + Math.sin(tick*0.06)*0.05);
-    ctx.beginPath(); ctx.ellipse(cx, cy - DH/2 + 9, 26, 20, 0, 0, Math.PI*2); ctx.fill();
-  }
-  // Monitor stand
-  ctx.fillStyle = '#2a2840';
-  ctx.fillRect(cx - 2, cy - DH/2 + mh + 2, 4, 4);
-  ctx.fillRect(cx - 5, cy - DH/2 + mh + 5, 10, 2);
-
-  // Lab tablet (keyboard replacement)
-  const tabCol = active ? hexRgba(aCol, 0.4) : 'rgba(40,40,50,0.8)';
-  ctx.fillStyle = '#1a1a22';
-  rr(cx - 12, cy + 3, 24, 7, 1); ctx.fill();
-  ctx.strokeStyle = tabCol; ctx.lineWidth = 0.8;
-  rr(cx - 12, cy + 3, 24, 7, 1); ctx.stroke();
-
-  // Active beaker animation
-  if (active) {
-    const bkx = cx + 18, bky = cy - 4;
-    // Beaker glass shape
-    ctx.strokeStyle = 'rgba(180,220,180,0.6)'; ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(bkx - 5, bky - 10); ctx.lineTo(bkx - 5, bky + 4);
-    ctx.arc(bkx, bky + 4, 5, Math.PI, 0);
-    ctx.lineTo(bkx + 5, bky - 10);
-    ctx.stroke();
-    // Liquid fill
-    ctx.fillStyle = hexRgba(aCol, 0.5);
-    ctx.beginPath(); ctx.arc(bkx, bky + 4, 5, 0, Math.PI, true);
-    ctx.lineTo(bkx - 5, bky); ctx.lineTo(bkx + 5, bky); ctx.fill();
-    // Bubbles rising
-    [0,1,2].forEach(bi => {
-      const bphase = (tick * 0.08 + bi * 0.9) % (Math.PI * 2);
-      ctx.globalAlpha = 0.6 + Math.sin(bphase) * 0.3;
-      ctx.fillStyle = hexRgba(aCol, 0.8);
-      ctx.beginPath(); ctx.arc(bkx + (bi-1)*2, bky - 8 + Math.sin(bphase)*5, 1.2, 0, Math.PI*2); ctx.fill();
-    });
-    ctx.globalAlpha = 1;
-    // Glow around beaker
-    ctx.fillStyle = hexRgba(aCol, 0.1 + Math.sin(tick*0.05)*0.04);
-    ctx.beginPath(); ctx.ellipse(bkx, bky, 12, 16, 0, 0, Math.PI*2); ctx.fill();
+    // Scanlines
+    ctx.strokeStyle='rgba(0,0,0,0.25)'; ctx.lineWidth=0.7;
+    for (let sl=cy-DH/2+6; sl<cy-DH/2+4+mh; sl+=2.5) {
+      ctx.beginPath(); ctx.moveTo(cx-DW/2+5,sl); ctx.lineTo(cx-DW/2+5+mw-2,sl); ctx.stroke();
+    }
+    ctx.fillStyle=hexRgba(aCol,0.18+Math.sin(tick*0.07)*0.08);
+    ctx.beginPath(); ctx.ellipse(cx-DW/2+14,cy-DH/2+11,18,14,0,0,Math.PI*2); ctx.fill();
   } else {
-    // Inactive beaker with dark liquid
-    const bkx = cx + 18, bky = cy - 4;
-    ctx.strokeStyle = 'rgba(120,140,120,0.3)'; ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(bkx - 5, bky - 10); ctx.lineTo(bkx - 5, bky + 4);
-    ctx.arc(bkx, bky + 4, 5, Math.PI, 0);
-    ctx.lineTo(bkx + 5, bky - 10);
-    ctx.stroke();
-    ctx.fillStyle = 'rgba(30,80,30,0.4)';
-    ctx.beginPath(); ctx.arc(bkx, bky + 4, 5, 0, Math.PI, true);
-    ctx.lineTo(bkx - 5, bky); ctx.lineTo(bkx + 5, bky); ctx.fill();
+    // Idle green blip
+    ctx.fillStyle=`rgba(0,255,80,${0.3+Math.sin(tick*0.04)*0.2})`;
+    ctx.beginPath(); ctx.arc(cx-DW/2+9,cy-DH/2+8,2,0,Math.PI*2); ctx.fill();
+  }
+
+  // ROTATING DIAL (right of panel)
+  const dx=cx+DW/2-11, dy=cy-DH/2+11;
+  ctx.fillStyle='#0a1008'; ctx.beginPath(); ctx.arc(dx,dy,8,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle=active?hexRgba(aCol,0.8):'rgba(0,150,60,0.5)'; ctx.lineWidth=1.5; ctx.stroke();
+  // Tick marks
+  for (let t=0;t<8;t++) {
+    const a=t*Math.PI/4; ctx.strokeStyle='rgba(100,200,100,0.4)'; ctx.lineWidth=0.8;
+    ctx.beginPath(); ctx.moveTo(dx+Math.cos(a)*5.5,dy+Math.sin(a)*5.5); ctx.lineTo(dx+Math.cos(a)*7,dy+Math.sin(a)*7); ctx.stroke();
+  }
+  // Needle
+  const needleA = active ? tick*0.05 : Math.PI*1.2;
+  ctx.strokeStyle=active?aCol:'rgba(0,200,80,0.5)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(dx,dy); ctx.lineTo(dx+Math.cos(needleA)*6,dy+Math.sin(needleA)*6); ctx.stroke();
+
+  // BEAKER (always visible, bottom-right area of panel)
+  const bkx=cx+12, bky=cy+4;
+  const beakerActive = active;
+  ctx.strokeStyle=beakerActive?hexRgba(aCol,0.8):'rgba(0,150,60,0.4)'; ctx.lineWidth=1.2;
+  ctx.beginPath();
+  ctx.moveTo(bkx-6,bky-13); ctx.lineTo(bkx-7,bky-2);
+  ctx.arc(bkx,bky+2,7,Math.PI+0.45,-0.45); ctx.lineTo(bkx+6,bky-13); ctx.stroke();
+  // Liquid fill (always has some green liquid)
+  const fillAlpha = beakerActive ? 0.65 : 0.25;
+  ctx.fillStyle=beakerActive?hexRgba(aCol,fillAlpha):`rgba(0,180,60,${fillAlpha})`;
+  ctx.beginPath(); ctx.arc(bkx,bky+2,7,0.5,Math.PI-0.5,true);
+  ctx.lineTo(bkx-5,bky-5); ctx.lineTo(bkx+5,bky-5); ctx.closePath(); ctx.fill();
+  if (beakerActive) {
+    // Animated bubbles
+    [0,1,2].forEach(bi => {
+      const bp=(tick*0.1+bi*0.9)%(Math.PI*2);
+      ctx.globalAlpha=0.6+Math.sin(bp)*0.35;
+      ctx.fillStyle=hexRgba(aCol,1);
+      ctx.beginPath(); ctx.arc(bkx-3+bi*3,bky-6+Math.sin(bp)*5,1.3,0,Math.PI*2); ctx.fill();
+    }); ctx.globalAlpha=1;
+    // Glow
+    ctx.fillStyle=hexRgba(aCol,0.12+Math.sin(tick*0.05)*0.05);
+    ctx.beginPath(); ctx.ellipse(bkx,bky,14,18,0,0,Math.PI*2); ctx.fill();
+  } else {
+    // Gentle idle glow
+    ctx.fillStyle=`rgba(0,255,80,${0.04+Math.sin(tick*0.03)*0.02})`;
+    ctx.beginPath(); ctx.ellipse(bkx,bky,12,14,0,0,Math.PI*2); ctx.fill();
   }
 }
 
@@ -695,147 +777,178 @@ function drawMinion(a) {
   const aCol = ACTION_COLORS[action]||ACTION_COLORS.idle;
   const isTall = ci % 3 === 0;
   const oneEye = ci % 3 === 1;
-  const bodyH = isTall ? 28 : 22;
-  const bodyW = isTall ? 9 : 11;
+  const bodyH = isTall ? 36 : 28;
+  const bodyW = isTall ? 12 : 15;
 
   // Shadow
-  ctx.fillStyle = 'rgba(0,0,0,0.2)';
-  ctx.beginPath(); ctx.ellipse(x+1, y+bodyH*0.5+8, bodyW+2, 3, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.beginPath(); ctx.ellipse(x+1, y+bodyH*0.5+10, bodyW+4, 4, 0, 0, Math.PI*2); ctx.fill();
 
   // Walking leg animation
-  const sw = walking ? Math.sin(walkTick*0.38)*5 : 0;
+  const sw = walking ? Math.sin(walkTick*0.38)*6 : 0;
 
   // Legs (blue overalls color)
   ctx.fillStyle = OVERALLS;
-  ctx.fillRect(x-5, y+bodyH*0.3+bob, 4, 9+sw);
-  ctx.fillRect(x+1, y+bodyH*0.3+bob, 4, 9-sw);
-  // Shoes (black rounded)
-  ctx.fillStyle = '#1a1a1a';
-  ctx.beginPath(); ctx.ellipse(x-3, y+bodyH*0.3+9+sw+bob, 5, 3, 0, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(x+3, y+bodyH*0.3+9-sw+bob, 5, 3, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillRect(x-6, y+bodyH*0.3+bob, 5, 11+sw);
+  ctx.fillRect(x+1, y+bodyH*0.3+bob, 5, 11-sw);
+  // Shoes (black rounded — bigger, more cartoony)
+  ctx.fillStyle = '#111';
+  ctx.beginPath(); ctx.ellipse(x-4, y+bodyH*0.3+12+sw+bob, 7, 4, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(x+4, y+bodyH*0.3+12-sw+bob, 7, 4, 0, 0, Math.PI*2); ctx.fill();
+  // Shoe shine
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  ctx.beginPath(); ctx.ellipse(x-5, y+bodyH*0.3+10+sw+bob, 3, 2, -0.4, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(x+3, y+bodyH*0.3+10-sw+bob, 3, 2, -0.4, 0, Math.PI*2); ctx.fill();
 
-  // Body (yellow ellipse)
+  // Body (yellow ellipse — rounder, fatter)
   ctx.fillStyle = SKIN;
   ctx.beginPath();
   ctx.ellipse(x, y+bob, bodyW, bodyH, 0, 0, Math.PI*2);
   ctx.fill();
-  ctx.strokeStyle = 'rgba(180,140,0,0.5)'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.strokeStyle = 'rgba(180,140,0,0.5)'; ctx.lineWidth = 1.2; ctx.stroke();
 
   // Overalls lower half
   ctx.fillStyle = OVERALLS;
   ctx.beginPath();
   ctx.ellipse(x, y+bodyH*0.35+bob, bodyW, bodyH*0.65, 0, 0, Math.PI*2);
   ctx.fill();
-  // Overalls bib
+  // Overalls bib (bigger)
   ctx.fillStyle = hexRgba(OVERALLS, 0.9);
-  rr(x-5, y-4+bob, 10, 8, 2); ctx.fill();
+  rr(x-6, y-5+bob, 12, 10, 2); ctx.fill();
   ctx.strokeStyle = 'rgba(100,160,255,0.3)'; ctx.lineWidth = 0.5;
-  rr(x-5, y-4+bob, 10, 8, 2); ctx.stroke();
+  rr(x-6, y-5+bob, 12, 10, 2); ctx.stroke();
   // "G" logo on bib
-  ctx.fillStyle = 'rgba(255,255,180,0.7)';
-  ctx.font = 'bold 6px sans-serif'; ctx.textAlign = 'center';
-  ctx.fillText('G', x, y+1+bob);
+  ctx.fillStyle = 'rgba(255,255,180,0.85)';
+  ctx.font = 'bold 7px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('G', x, y+2+bob);
+  // Pocket on bib
+  ctx.strokeStyle = 'rgba(100,160,255,0.25)'; ctx.lineWidth = 0.5;
+  rr(x-4, y+2+bob, 8, 3, 1); ctx.stroke();
   // Overalls straps
-  ctx.strokeStyle = hexRgba(OVERALLS, 0.8); ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(x-5, y-4+bob); ctx.lineTo(x-6, y-bodyH*0.7+bob); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(x+5, y-4+bob); ctx.lineTo(x+6, y-bodyH*0.7+bob); ctx.stroke();
+  ctx.strokeStyle = hexRgba(OVERALLS, 0.8); ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(x-6, y-5+bob); ctx.lineTo(x-7, y-bodyH*0.7+bob); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x+6, y-5+bob); ctx.lineTo(x+7, y-bodyH*0.7+bob); ctx.stroke();
 
-  // Arms
-  const armSwing = walking ? Math.sin(walkTick*0.38)*5 : 0;
-  ctx.strokeStyle = SKIN; ctx.lineWidth = 4; ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(x-bodyW, y-bodyH*0.15+bob); ctx.lineTo(x-bodyW-8, y+2+armSwing+bob); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(x+bodyW, y-bodyH*0.15+bob); ctx.lineTo(x+bodyW+8, y+2-armSwing+bob); ctx.stroke();
+  // Arms (chunkier)
+  const armSwing = walking ? Math.sin(walkTick*0.38)*6 : 0;
+  ctx.strokeStyle = SKIN; ctx.lineWidth = 5; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x-bodyW, y-bodyH*0.15+bob); ctx.lineTo(x-bodyW-10, y+3+armSwing+bob); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x+bodyW, y-bodyH*0.15+bob); ctx.lineTo(x+bodyW+10, y+3-armSwing+bob); ctx.stroke();
   ctx.lineCap = 'butt';
-  // Hands
-  ctx.fillStyle = SKIN;
-  ctx.beginPath(); ctx.arc(x-bodyW-8, y+2+armSwing+bob, 3.5, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc(x+bodyW+8, y+2-armSwing+bob, 3.5, 0, Math.PI*2); ctx.fill();
+  // White gloves!
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath(); ctx.arc(x-bodyW-10, y+3+armSwing+bob, 5, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x+bodyW+10, y+3-armSwing+bob, 5, 0, Math.PI*2); ctx.fill();
+  // Glove knuckle lines
+  ctx.strokeStyle = 'rgba(180,180,180,0.6)'; ctx.lineWidth = 0.8;
+  [-2,0,2].forEach(gox => {
+    ctx.beginPath();
+    ctx.moveTo(x-bodyW-10+gox, y+3+armSwing+bob-3);
+    ctx.lineTo(x-bodyW-10+gox, y+3+armSwing+bob+3);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x+bodyW+10+gox, y+3-armSwing+bob-3);
+    ctx.lineTo(x+bodyW+10+gox, y+3-armSwing+bob+3);
+    ctx.stroke();
+  });
 
-  // Head
+  // Head (bigger, rounder)
   const headY = y - bodyH*0.75 + bob;
-  const headR = isTall ? 8 : 9;
+  const headR = isTall ? 11 : 13;
   ctx.fillStyle = SKIN;
   ctx.beginPath();
-  ctx.ellipse(x, headY, headR, isTall ? headR*1.2 : headR, 0, 0, Math.PI*2);
+  ctx.ellipse(x, headY, headR, isTall ? headR*1.25 : headR, 0, 0, Math.PI*2);
   ctx.fill();
-  ctx.strokeStyle = 'rgba(180,140,0,0.4)'; ctx.lineWidth = 0.8; ctx.stroke();
+  ctx.strokeStyle = 'rgba(180,140,0,0.4)'; ctx.lineWidth = 1; ctx.stroke();
 
   // Hair — varies by ci
-  const hairY = headY - headR;
+  const hairY = headY - (isTall ? headR*1.2 : headR);
   ctx.fillStyle = '#1a1010';
   if (ci % 4 === 0) {
-    // Spiky (Kevin style)
+    // Spiky (Kevin style) — bigger
     ctx.beginPath();
-    ctx.moveTo(x-4,hairY+3); ctx.lineTo(x-6,hairY-3); ctx.lineTo(x-2,hairY);
-    ctx.lineTo(x,hairY-6); ctx.lineTo(x+2,hairY); ctx.lineTo(x+6,hairY-3); ctx.lineTo(x+4,hairY+3);
+    ctx.moveTo(x-5,hairY+4); ctx.lineTo(x-9,hairY-5); ctx.lineTo(x-3,hairY-1);
+    ctx.lineTo(x,hairY-9); ctx.lineTo(x+3,hairY-1); ctx.lineTo(x+9,hairY-5); ctx.lineTo(x+5,hairY+4);
     ctx.fill();
   } else if (ci % 4 === 1) {
-    // Single side hair (Stuart)
-    ctx.strokeStyle = '#1a1010'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(x+2, hairY+2); ctx.quadraticCurveTo(x+8, hairY-4, x+10, hairY-6); ctx.stroke();
+    // Single side hair (Stuart) — swoopier
+    ctx.strokeStyle = '#1a1010'; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x+3, hairY+3); ctx.quadraticCurveTo(x+11, hairY-5, x+14, hairY-9); ctx.stroke();
     ctx.lineCap = 'butt';
   } else if (ci % 4 === 2) {
     // No hair (bald) — nothing
   } else {
     // Bowl cut (Bob)
-    ctx.beginPath(); ctx.arc(x, hairY+3, headR-1, Math.PI, 0); ctx.fill();
+    ctx.beginPath(); ctx.arc(x, hairY+4, headR, Math.PI, 0); ctx.fill();
   }
 
-  // Goggle strap
+  // Goggle strap (thicker)
   ctx.fillStyle = GOGGLE_RIM;
-  ctx.fillRect(x-headR-1, headY-2, headR*2+2, 4);
+  ctx.fillRect(x-headR-2, headY-3, headR*2+4, 5);
 
   // Goggle rim = agent color
   const goggleColor = AGENT_COLORS[ci % AGENT_COLORS.length];
 
   if (oneEye) {
-    // ONE BIG EYE (Stuart)
+    // ONE BIG EYE (Stuart) — bigger
     ctx.fillStyle = goggleColor;
-    ctx.beginPath(); ctx.arc(x, headY, 6, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x, headY, 8, 0, Math.PI*2); ctx.fill();
     ctx.strokeStyle = '#555'; ctx.lineWidth = 1.5; ctx.stroke();
     ctx.fillStyle = GOGGLE_LENS;
-    ctx.beginPath(); ctx.arc(x, headY, 4.5, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x, headY, 6, 0, Math.PI*2); ctx.fill();
     ctx.fillStyle = '#111';
-    ctx.beginPath(); ctx.arc(x+0.5, headY+0.5, 2.5, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,0.8)';
-    ctx.beginPath(); ctx.arc(x-1, headY-1, 1, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x+0.5, headY+0.5, 3.5, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.beginPath(); ctx.arc(x-2, headY-2, 1.5, 0, Math.PI*2); ctx.fill();
   } else {
-    // TWO EYES
-    [-3.8, 3.8].forEach((ox, ei) => {
+    // TWO EYES — bigger
+    [-5.5, 5.5].forEach((ox) => {
       ctx.fillStyle = goggleColor;
-      ctx.beginPath(); ctx.arc(x+ox, headY, 4, 0, Math.PI*2); ctx.fill();
-      ctx.strokeStyle = '#555'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.beginPath(); ctx.arc(x+ox, headY, 5.5, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#555'; ctx.lineWidth = 1.2; ctx.stroke();
       ctx.fillStyle = GOGGLE_LENS;
-      ctx.beginPath(); ctx.arc(x+ox, headY, 2.8, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x+ox, headY, 3.8, 0, Math.PI*2); ctx.fill();
       ctx.fillStyle = '#111';
-      ctx.beginPath(); ctx.arc(x+ox+0.3, headY+0.3, 1.5, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,0.8)';
-      ctx.beginPath(); ctx.arc(x+ox-0.5, headY-0.5, 0.6, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x+ox+0.4, headY+0.4, 2.2, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.beginPath(); ctx.arc(x+ox-1, headY-1, 1, 0, Math.PI*2); ctx.fill();
     });
     // Bridge between goggles
     ctx.fillStyle = GOGGLE_RIM;
-    ctx.fillRect(x-0.5, headY-1.5, 1, 3);
+    ctx.fillRect(x-1, headY-2, 2, 4);
   }
 
-  // Smile (always!)
-  ctx.strokeStyle = 'rgba(120,70,0,0.8)'; ctx.lineWidth = 1.5;
+  // Smile with teeth!
+  ctx.strokeStyle = 'rgba(100,50,0,0.9)'; ctx.lineWidth = 1.8;
   ctx.beginPath();
-  ctx.arc(x, headY + headR*0.4, headR*0.45, 0.2, Math.PI-0.2);
+  const smR = headR * 0.5, smY = headY + headR*0.45;
+  ctx.arc(x, smY, smR, 0.3, Math.PI-0.3);
   ctx.stroke();
+  // White teeth (2 big rectangles between smile arc endpoints)
+  const t1x = x - smR * Math.cos(0.3), t1y = smY + smR * Math.sin(0.3);
+  const t2x = x + smR * Math.cos(0.3), t2y = t1y;
+  const smileWidth = t2x - t1x;
+  ctx.fillStyle = 'white';
+  ctx.fillRect(t1x + smileWidth*0.1, t1y - 3, smileWidth*0.35, 4);
+  ctx.fillRect(t1x + smileWidth*0.55, t1y - 3, smileWidth*0.35, 4);
+  // Tooth gap line
+  ctx.strokeStyle = 'rgba(100,50,0,0.5)'; ctx.lineWidth = 0.8;
+  ctx.beginPath(); ctx.moveTo(x, t1y-3); ctx.lineTo(x, t1y+1); ctx.stroke();
 
   // Action glow halo
   if (action !== 'idle' && phase === 'working') {
     ctx.fillStyle = hexRgba(aCol, 0.07+Math.sin(tick*0.06)*0.03);
-    ctx.beginPath(); ctx.ellipse(x, y, 20, 24, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(x, y, 26, 32, 0, 0, Math.PI*2); ctx.fill();
   }
 
   // Raised arm + tool when working
   if (action !== 'idle' && action !== 'thinking' && phase === 'working') {
-    ctx.strokeStyle = SKIN; ctx.lineWidth = 4; ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(x+bodyW, y-bodyH*0.15+bob); ctx.lineTo(x+bodyW+10, y-bodyH*0.5+bob); ctx.stroke();
+    ctx.strokeStyle = SKIN; ctx.lineWidth = 5; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x+bodyW, y-bodyH*0.15+bob); ctx.lineTo(x+bodyW+12, y-bodyH*0.5+bob); ctx.stroke();
     ctx.lineCap = 'butt';
-    ctx.fillStyle = SKIN;
-    ctx.beginPath(); ctx.arc(x+bodyW+10, y-bodyH*0.5+bob, 3.5, 0, Math.PI*2); ctx.fill();
+    // White glove on raised hand too
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(x+bodyW+12, y-bodyH*0.5+bob, 5, 0, Math.PI*2); ctx.fill();
     ctx.save(); ctx.translate(0, bob); drawLabTool(x, y, action, aCol, bodyH); ctx.restore();
   }
 
