@@ -831,6 +831,88 @@ function drawEmptyState() {
   ctx.fillText('Start Claude Code to see activity', W/2, H/2+14);
 }
 
+// ─── DEMO MODE ────────────────────────────────────────────────────────────────
+const DEMO_SESSIONS = [
+  { id: 'demo-0', name: 'play-web'  },
+  { id: 'demo-1', name: 'play-ctv'  },
+  { id: 'demo-2', name: 'play-ios'  },
+  { id: 'demo-3', name: 'play-and'  },
+  { id: 'demo-4', name: 'ai-feed'   },
+  { id: 'demo-5', name: 'ai-cont'   },
+  { id: 'demo-6', name: 'player'    },
+  { id: 'demo-7', name: 'config'    },
+];
+
+const DEMO_BUBBLES = {
+  thinking:   ['Hmm, what if...', 'Computing...', 'Let me think...', 'Analyzing...'],
+  reading:    ['Reading docs...', 'Checking spec...', 'Reviewing code...', 'Scanning file...'],
+  typing:     ['Writing code...', 'Implementing...', 'Fixing the bug...', 'Adding feature...'],
+  terminal:   ['Running tests...', 'npm install...', 'git status', 'Compiling...'],
+  browsing:   ['Searching docs...', 'Fetching data...', 'Checking PR...', 'Loading page...'],
+  responding: ['Sending reply...', 'Explaining...', 'Almost done!', 'Here you go!'],
+  spawning:   ['Spawning agent...', 'Launching task...', 'Deploying...', 'Starting job...'],
+  tool:       ['Using tool...', 'Executing...', 'Running cmd...', 'Calling API...'],
+  searching:  ['Finding files...', 'Scanning repo...', 'Grep-ing...', 'Searching...'],
+};
+const DEMO_ACTIONS = Object.keys(DEMO_BUBBLES);
+
+function demoBubble(action) {
+  const list = DEMO_BUBBLES[action] || ['Working...'];
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+function runDemo() {
+  statusEl.textContent = 'demo mode — agents incoming';
+
+  // Spawn agents one by one with a stagger
+  DEMO_SESSIONS.forEach((s, i) => {
+    setTimeout(() => {
+      const agent = getOrCreate(s.id, s.name);
+      agent.slotIdx = i;
+      const action = DEMO_ACTIONS[i % DEMO_ACTIONS.length];
+      agent.action = action;
+      agent.bubbleText = demoBubble(action);
+      agent.bubbleLife = 200;
+      agent.lastEvent = Date.now();
+      agent.phase = 'to_work';
+      planPathToWork(agent);
+    }, i * 700);
+  });
+
+  // Cycle actions every ~4s while agents are working
+  const cycleInterval = setInterval(() => {
+    for (const a of agents.values()) {
+      if (!a.id.startsWith('demo-') || a.phase !== 'working') continue;
+      const action = DEMO_ACTIONS[Math.floor(Math.random() * DEMO_ACTIONS.length)];
+      a.action = action;
+      a.bubbleText = demoBubble(action);
+      a.bubbleLife = 200;
+      a.lastEvent = Date.now(); // keep idle timeout at bay
+    }
+  }, 4000);
+
+  // After 30s send all demo agents home
+  setTimeout(() => {
+    clearInterval(cycleInterval);
+    statusEl.textContent = 'demo — agents returning';
+    for (const a of agents.values()) {
+      if (!a.id.startsWith('demo-')) continue;
+      a.phase = 'to_idle';
+      a.action = 'idle';
+      a.buildProgress = 0;
+      a.bubbleText = 'See ya! 👋';
+      a.bubbleLife = 160;
+      planPathToLounge(a);
+    }
+    // Remove demo agents after they've had time to walk back
+    setTimeout(() => {
+      for (const id of [...agents.keys()])
+        if (id.startsWith('demo-')) agents.delete(id);
+      statusEl.textContent = 'demo ended — start Claude Code to see real agents';
+    }, 9000);
+  }, 30000);
+}
+
 // ─── SSE ──────────────────────────────────────────────────────────────────────
 function connect() {
   const es = new EventSource('/events');
@@ -862,6 +944,7 @@ function connect() {
 }
 
 connect();
+if (new URLSearchParams(window.location.search).get('demo') === 'true') runDemo();
 
 async function sendPrompt() {
   const prompt = promptInput.value.trim();
